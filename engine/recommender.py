@@ -14,6 +14,7 @@ from engine.taste import score_and_rank_places, ScoredPlace, get_top_cuisines
 from engine.crossover import get_crossover_cuisine, get_serendipitous_cuisine
 from engine.time_aware import filter_open_places, get_open_status_label
 from engine.secret_gem import enrich_secret_gems
+from engine.lazy_resolve import lazy_resolve_places
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +144,12 @@ def recommend(
 
     # Sort by rating for display
     result.places.sort(key=lambda p: p.google_rating, reverse=True)
+
+    # Step 9: Lazy-resolve Google ratings for surfaced venues (background)
+    try:
+        lazy_resolve_places(result.places)
+    except Exception as e:
+        logger.debug(f"Lazy resolve trigger failed (non-blocking): {e}")
 
     logger.info(f"Final recommendations: {len(result.places)} places")
     return result
