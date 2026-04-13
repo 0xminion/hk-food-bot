@@ -1,0 +1,167 @@
+"""CSV data loader and filtering utilities for HK Food Bot."""
+
+import csv
+import math
+import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Place:
+    """Represents a restaurant or bar."""
+    name: str
+    type: str  # "restaurant" or "bar"
+    cuisine_tags: list[str] = field(default_factory=list)
+    style_tags: list[str] = field(default_factory=list)
+    address: str = ""
+    lat: float = 0.0
+    lng: float = 0.0
+    google_rating: float = 0.0
+    or_rating: float = 0.0
+    review_count: int = 0
+    google_place_id: str = ""
+    booking_url: str = ""
+    booking_platform: str = ""
+    opening_hours: str = ""
+    source_url: str = ""
+    is_secret_gem: bool = False
+    last_updated: str = ""
+    source: str = ""
+    distance_walk_m: int = 0
+    distance_drive_m: int = 0
+
+
+def _parse_tags(raw: str) -> list[str]:
+    """Parse comma-separated tag string into a clean list."""
+    if not raw:
+        return []
+    # Remove brackets, quotes, and split
+    cleaned = raw.strip()
+    if cleaned.startswith("[") and cleaned.endswith("]"):
+        cleaned = cleaned[1:-1]
+    return [t.strip().lower() for t in cleaned.replace('"', "").replace("'", "").split(",") if t.strip()]
+
+
+def _safe_float(value: str, default: float = 0.0) -> float:
+    """Safely parse a float from string."""
+    try:
+        return float(value) if value else default
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_int(value: str, default: int = 0) -> int:
+    """Safely parse an int from string."""
+    try:
+        return int(float(value)) if value else default
+    except (ValueError, TypeError):
+        return default
+
+
+def load_places(csv_path: str | Path) -> list[Place]:
+    """Load places from CSV file."""
+    path = Path(csv_path)
+    if not path.exists():
+        logger.error(f"CSV file not found: {path}")
+        return []
+
+    places: list[Place] = []
+    with open(path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                name = (row.get("name") or "").strip()
+                if not name:
+                    continue  # Skip rows with no name
+
+                raw_type = (row.get("type") or "restaurant").strip().lower()
+                if raw_type not in ("restaurant", "bar"):
+                    raw_type = "restaurant"
+
+                lat = _safe_float(row.get("lat"))
+                lng = _safe_float(row.get("lng"))
+
+                # Validate coordinate ranges
+                if not (-90.0 <= lat <= 90.0):
+                    lat = 0.0
+                if not (-180.0 <= lng <= 180.0):
+                    lng = 0.0
+
+                # Clamp rating to valid range
+                google_rating = max(0.0, min(5.0, _safe_float(row.get("google_rating"))))
+                or_rating = max(0.0, min(5.0, _safe_float(row.get("or_rating"))))
+
+                review_count = max(0, _safe_int(row.get("review_count")))
+
+                places.append(Place(
+                    name=name,
+                    type=raw_type,
+                    cuisine_tags=_parse_tags(row.get("cuisine_tags") or ""),
+                    style_tags=_parse_tags(row.get("style_tags") or ""),
+                    address=(row.get("address") or "").strip(),
+                    lat=lat,
+                    lng=lng,
+                    google_rating=google_rating,
+                    or_rating=or_rating,
+                    review_count=review_count,
+                    google_place_id=(row.get("google_place_id") or "").strip(),
+                    booking_url=(row.get("booking_url") or "").strip(),
+                    booking_platform=(row.get("booking_platform") or "").strip(),
+                    opening_hours=(row.get("opening_hours") or "").strip(),
+                    source_url=(row.get("source_url") or "").strip(),
+                    is_secret_gem=(row.get("is_secret_gem") or "false").lower() in ("1", "true"),
+                    last_updated=(row.get("last_updated") or "").strip(),
+                    source=(row.get("source") or "").strip(),
+                ))
+            except Exception as e:
+                logger.warning(f"Error parsing row '{row.get('name', '?')}': {e}")
+                continue
+
+    logger.info(f"Loaded {len(places)} places from {path}")
+    return places
+
+
+def filter_by_type(places: list[Place], place_type: str) -> list[Place]:
+    """Filter places by type (restaurant or bar)."""
+    return [p for p in places if p.type == place_type]
+
+
+def compute_distances(places: list[Place], user_lat: float, user_lng: float) -> list[Place]:
+    """Compute haversine distance for each place and set walk/drive estimates."""
+    from utils.haversine import haversine_distance, compute_walk_distance, compute_drive_distance
+
+    for p in places:
+        # Skip places with invalid or missing coordinates
+        if (p.lat == 0.0 and p.lng == 0.0
+                or math.isnan(p.lat) or math.isnan(p.lng)):
+            p.distance_walk_m = 99999
+            p.distance_drive_m = 99999
+            continue
+
+        straight_line = haversine_distance(user_lat, user_lng, p.lat, p.lng)
+        p.distance_walk_m = compute_walk_distance(straight_line)
+        p.distance_drive_m = compute_drive_distance(straight_line)
+
+    return places
+
+
+def get_unique_cuisines(places: list[Place]) -> list[str]:
+    """Get all unique cuisine tags from a list of places."""
+    tags: set[str] = set()
+    for p in places:
+        tags.update(p.cuisine_tags)
+    return sorted(tags)
+
+
+def filter_by_cuisine(places: list[Place], cuisines: list[str]) -> list[Place]:
+    """Filter places that match any of the given cuisine tags."""
+    cuisine_set = {c.lower() for c in cuisines}
+    return [p for p in places if cuisine_set & set(p.cuisine_tags)]
+
+
+def get_all_places(csv_path: str | Path) -> list[Place]:
+    """Convenience: load all places from the given CSV path."""
+    return load_places(csv_path)

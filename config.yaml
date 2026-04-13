@@ -1,0 +1,39 @@
+# HK Food Bot Configuration
+
+telegram:
+  token: "YOUR_BOT_TOKEN_HERE"
+  parse_mode: "HTML"
+
+data:
+  places_csv: "data/merged_places.csv"
+
+defaults:
+  search_radius_m: 5000
+  num_recommendations: 5
+  num_cuisine_suggestions: 5
+
+# Default reference points for distance calc (Central HK)
+defaults_location:
+  lat: 22.2783
+  lng: 114.1747
+
+# Time-aware filtering
+time_filter:
+  enabled: true
+  timezone: "Asia/Hong_Kong"
+
+# Taste profile (from Google Maps "minion abc" list analysis)
+taste_profile:
+  # Cuisines are weighted 0.0-1.0 based on user's saved list frequency
+  # See engine/taste.py for full profile
+  top_cuisines:
+    - italian
+    - chinese
+    - cocktail-bar
+    - japanese
+    - cantonese
+    - thai
+    - spanish
+    - western
+    - ramen
+    - hotpot
