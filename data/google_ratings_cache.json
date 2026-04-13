@@ -590,5 +590,749 @@
     "google_reviews": 677,
     "resolved": true,
     "last_updated": "2026-04-13"
+  },
+  "001|Tai Kwun, Hollywood Rd, Central, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 270,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "18 Grams Speciality Coffee|Hong Kong, Causeway Bay, Cannon St, 15-27號Hoi To Court": {
+    "google_rating": 4.1,
+    "google_reviews": 391,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "ARGO|8 Finance St, Central, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 273,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Artemis & Apollo|GF 9&11, Moon St, Wan Chai, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 538,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Associazione Chianti|15 Ship St, Wan Chai, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 380,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "BACI Trattoria & Bar|Hong Kong, Central, California Tower 32 D’Aguilar St G/F": {
+    "google_rating": 4.4,
+    "google_reviews": 529,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Bakehouse|16 Kai Chiu Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 959,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Bakehouse (Wan Chai)|14 Tai Wong St E, Wan Chai, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 3102,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Banh Mi Nem|247-249 Queen's Rd E, Wan Chai, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 210,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Bar Mind 念|11號 Elgin St, Central, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 45,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Bayi|43 Water St, Sai Wan, Hong Kong": {
+    "google_rating": 4.1,
+    "google_reviews": 727,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Beanmountain|1 Canal Road East, Canal Rd E, Causeway Bay, Hong Kong": {
+    "google_rating": 3.7,
+    "google_reviews": 124,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Brass Spoon Wanchai|Shop B, G/F, 1-3 Moon Street, Moon St, Wan Chai, Hong Kong": {
+    "google_rating": 4.0,
+    "google_reviews": 400,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Busy Bird|No.10 St Francis St, Wan Chai, Hong Kong": {
+    "google_rating": 4.0,
+    "google_reviews": 51,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "BÀRBAR|G/F, 9 Ship St, Wan Chai, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 247,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Calle Ocho|Fashion Walk, 8 Cleveland St, Causeway Bay, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 1181,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Carbone Hong Kong|Hong Kong, 香港島 Wyndham St, 33號9th Floor": {
+    "google_rating": 4.4,
+    "google_reviews": 971,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Check In Taipei (Causeway Bay)|Shop 07, Level 4, The, World Trade Centre, Gloucester Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 167,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Cheung Hing Kee Shanghai Pan-Fried Buns - Wan Chai|76 Thomson Rd, Wan Chai, Hong Kong": {
+    "google_rating": 4.0,
+    "google_reviews": 524,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Chukfo Taipan Restaurant|Hong Kong, Wan Chai, Triangle St, 2-3號地下3號舖 Wah Yan Court": {
+    "google_rating": 4.3,
+    "google_reviews": 1165,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Chutney Tandoor House|4/F, 77 Wyndham St, Central, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 706,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Cong dessert|35號 Johnston Rd, Wan Chai, Hong Kong": {
+    "google_rating": 4.7,
+    "google_reviews": 700,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Crushed Wine Bar + Retail|Shop A, G/F, 6 - 8 Second St, Sai Ying Pun, Hong Kong": {
+    "google_rating": 4.9,
+    "google_reviews": 225,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Dirty Laundry HK|Shop A, 100 Lockhart Rd, Wan Chai, Hong Kong": {
+    "google_rating": 3.8,
+    "google_reviews": 85,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Dr. Fern's Gin Parlour|74 Queen's Road Central, Central, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 487,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Eight Treasures|Wing Wah Building, 124號 Electric Rd, Tin Hau, Hong Kong": {
+    "google_rating": 4.2,
+    "google_reviews": 838,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "FAT J Char Siu|Rialto Building, Landale St, Wan Chai, Hong Kong": {
+    "google_rating": 4.1,
+    "google_reviews": 533,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "FRANCIS|Hong Kong, Wan Chai, St Francis St, 4 & 6號G/F": {
+    "google_rating": 4.5,
+    "google_reviews": 664,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Fiata Pizza|2 Staunton St, Central, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 955,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Florence Trippa|shop E, G/F, 39-41 Caine Rd, Central, Hong Kong": {
+    "google_rating": 4.8,
+    "google_reviews": 1748,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "富臨飯店 Forum Restaurant|255-257 Gloucester Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.2,
+    "google_reviews": 290,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "GOKAN|30 Ice House St, Central, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 163,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Giando Italian Restaurant & Bar|Shop 1, G/F, Tower, Starcrest Block 1, 9 Star St, Wan Chai, Hong Kong": {
+    "google_rating": 4.2,
+    "google_reviews": 520,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Green Tea (Hysan Place)|12/F, 500 Hennessy Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 318,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "HEXA|Shop OTE 101, Ocean Terminal, Harbour City, Canton Rd, Tsim Sha Tsui, Hong Kong": {
+    "google_rating": 4.0,
+    "google_reviews": 1073,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "HK Jebn Limited|10/F, Causeway Bay Plaza 1, 489 Hennessy Road, Hong Kong, Hong Kong": {
+    "google_rating": 3.8,
+    "google_reviews": 28,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "He Says Lounge|13F, L Square, 461 Lockhart Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 144,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Ho Ho Restaurant|Luen Wai Apartment, 136-142 Belcher's St, Kennedy Town, Hong Kong": {
+    "google_rating": 3.9,
+    "google_reviews": 1011,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Hugger Mugger|Basement, 43-55 地庫, 43-45號 Wyndham St, Central, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 76,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Hutong|H Zentre, 18/F, 15 Middle Rd, Tsim Sha Tsui, Hong Kong": {
+    "google_rating": 4.2,
+    "google_reviews": 1139,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Jenny Bakery Tsim Sha Tsui|號舖, 彌敦道62號，美麗都大廈1樓42, 62號 Nathan Rd, Tsim Sha Tsui, Hong Kong": {
+    "google_rating": 3.9,
+    "google_reviews": 5135,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Kokoro Tokyo Mazesoba (Wan Chai)|Hong Kong, Wan Chai, Hennessy Rd, 68號號 地下1C舖": {
+    "google_rating": 4.3,
+    "google_reviews": 389,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Lau Haa Hot Pot Restaurant|Lockhart House, Lockhart Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.0,
+    "google_reviews": 259,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Le Colvert|Shop 3, G/F, 321 Des Voeux Rd W, Sai Ying Pun, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 1504,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Leela|Shop 301-310, 1 Sunning Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 232,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "MONO LAB|7 FLOOR, 31-33 Hollywood Rd, Central, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 116,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Maru Korean Restaurant Pub|48 Staunton St, Central, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 235,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Megan's Kitchen|5/F HK Hong Kong Island, 165-171 Wan Chai Rd, Wan Chai, Hong Kong": {
+    "google_rating": 4.1,
+    "google_reviews": 465,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Moonkok (Central)|1/F, FOCO, 48 Cochrane St, Central, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 28,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Motorino SoHo|14 Shelley St, Central, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 856,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Nocino Tai hang|Shop 92E, Tung Lo Wan Rd, Tai Hang, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 292,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Noda Coffee|Hong Kong, Winland Square 314-324 Hennessy RoadShop BG/F": {
+    "google_rating": 4.2,
+    "google_reviews": 142,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Nook Coffee|Sheung Wan, 9 Mee Lun Street, Central, Hong Kong": {
+    "google_rating": 4.8,
+    "google_reviews": 140,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Olé Spanish Restaurant|1/F, Shun Ho Tower, 24-30 Ice House St, Central, Hong Kong": {
+    "google_rating": 4.9,
+    "google_reviews": 39,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Panyin Shabu|Hong Kong, Causeway Bay, Jaffe Rd, 379-389號, Dandenong Mansion, 地下6-7號舖": {
+    "google_rating": 4.5,
+    "google_reviews": 161,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Pica Pica|G/F, Kai Tak Commercial Building, Shop G & H, 317 - 321 Des Voeux Rd Central, Sheung Wan, Hong Kong": {
+    "google_rating": 5.0,
+    "google_reviews": 8,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Pici|地舖, GF, 16 St Francis Yard, Wan Chai, Hong Kong": {
+    "google_rating": 4.7,
+    "google_reviews": 3580,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Pistol Bar & Shisha Lounge|26/F, The Sharp11 Sharp St E, Causeway Bay, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 75,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Polar Lounge|Hong Kong, Causeway Bay, Lockhart Rd, 459-461號HK 香港島 銅鑼灣 16/F, The L Square": {
+    "google_rating": 4.8,
+    "google_reviews": 132,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Popinjays|Rooftop, 22 Cotton Tree Dr, Central, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 697,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Porker|Hong Kong, Central, Cochrane St, 26號 G/F": {
+    "google_rating": 4.3,
+    "google_reviews": 393,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Quinary|56, 58 Hollywood Rd, Central, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 980,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Ramen Cubism|Hong Kong, Central, Wellington St, 27-29號地庫": {
+    "google_rating": 4.0,
+    "google_reviews": 526,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Samsen Sheung Wan|G/F, 23 Jervois St, Sheung Wan, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 1241,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Samsen (Wan Chai)|68 Stone Nullah Ln, Wan Chai, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 1552,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "San Xi Lou|Hong Kong, Causeway Bay, Percival St, 99號Lee Theatre Plaza17B": {
+    "google_rating": 4.1,
+    "google_reviews": 766,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "She Says Lounge|4/F, Soho Tower, 25 Hart Ave, Tsim Sha Tsui, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 177,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Sister Wah Beef Brisket|13 Electric Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.0,
+    "google_reviews": 2771,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Skewer Kitchen (Central)|Hong Kong, Central, On Hing Terrace, 1號, On Hing Building, 地下A鋪": {
+    "google_rating": 4.6,
+    "google_reviews": 234,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Socio Hong Kong|17 Staunton St, Central, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 140,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Stellar House 星月居|3/F, Chuang's Enterprises Building, 382 Lockhart Rd, Wan Chai, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 219,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Stockton|Wyndham Mansion, 32 Wyndham St, Central, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 450,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Sushi Yoshi|2 Bullock Ln, Wan Chai, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 89,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "SìpSip Rooftop Bar|25/F, 108 Electric Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 360,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Tan’s Gourmet|Hong Kong, Sai Wan, High St, 39-41號Kam Lun MansionG/F": {
+    "google_rating": 4.4,
+    "google_reviews": 53,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Thai Pai Dong|The Uptown, Staunton St, Central, Hong Kong": {
+    "google_rating": 4.2,
+    "google_reviews": 159,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Aubrey|25/F, Mandarin Oriental, Hong Kong, 5 Connaught Rd Central, Central, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 512,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Chairman Restaurant|3rd Floor, The Wellington, 198 Wellington St, Central, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 748,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Chinese Library|Block 01, Tai Kwun, Police Headquarters, 10 Hollywood Rd, Central, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 451,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Iron Fairies Hong Kong|LG, 1 Hollywood Rd, Central, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 1947,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Old Book Store|Hong Kong, Causeway Bay, Jaffe Rd, 535號號Tower 535地下": {
+    "google_rating": 4.8,
+    "google_reviews": 681,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Old Man|Lower G/F, 37-39 Aberdeen Street, Soho, Central, Hong Kong, 39 Aberdeen St, Central, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 874,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Optimist|239號地下至, 2樓, 239 Hennessy Rd, Wan Chai, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 3057,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Parallel|9 Old Bailey St, Central, Hong Kong": {
+    "google_rating": 4.7,
+    "google_reviews": 49,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Savory Project|4 Staunton Street, Soho, Central, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 182,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Social Den HK|The Loop, 33, 9/F Wellington St, Central, Hong Kong": {
+    "google_rating": 3.7,
+    "google_reviews": 35,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "The Wise King - SOHO, Hong Kong.|Basement, Soho, 25 Staunton Street, Tsun Wing Ln Central, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 171,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "ThongSmith Hong Kong|Shop 01-06, Ground Floor, Spring Garden Mansion, 38 Spring Garden Ln, Wan Chai, Hong Kong": {
+    "google_rating": 3.8,
+    "google_reviews": 53,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Tian Tian Hainanese Chicken Rice|H2舖, Fashion Walk, 9號 Kingston St, Causeway Bay, Hong Kong": {
+    "google_rating": 4.1,
+    "google_reviews": 971,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "TokyoLima|地舖, Car Po Commercial Building, G/F Car Po Commercial Building 18-20, 18-20號 Lyndhurst Terrace, Central, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 1640,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Tomacado花廚 Hong Kong|Shop L2-06, L2, World Trade Centre, 280 Gloucester Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 245,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Tori Izakaya|17/F, 525 Hennessy Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.9,
+    "google_reviews": 330,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Trattoria Felino|G/F, 1-7 Ship St, Wan Chai, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 647,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Unagi Yondaime Kikukawa Causeway Bay|Hong Kong, Causeway Bay, Hysan Ave, 33號Lee Garden OneShop 401A, 4/F": {
+    "google_rating": 4.3,
+    "google_reviews": 228,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Van Gogh Kitchen|Hong Kong, Bowrington, Hennessy Rd, 451-457號, Shing Wah Mansion, 2樓B室": {
+    "google_rating": 4.4,
+    "google_reviews": 513,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Vission Bakery|LGF, 7 Staunton St, Central, Hong Kong": {
+    "google_rating": 4.4,
+    "google_reviews": 926,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "WING Restaurant|29/F The Wellington, 198 Wellington St, Central, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 118,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Waso Cafe (Tsim Sha Tsui)|Hong Kong, Tsim Sha Tsui, Granville Rd, 10號地下": {
+    "google_rating": 3.8,
+    "google_reviews": 1097,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Waso Cafe (Wan Chai)|272號 Jaffe Rd, Wan Chai, Hong Kong": {
+    "google_rating": 3.7,
+    "google_reviews": 1163,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "YAOWARAT|SHOP C, G/F, 108 Hollywood Rd, Central, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 31585,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Yakiniku Luigi|Shop B, G/F, 33 Lockhart Rd, Wan Chai, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 129,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Yardbird|Winsome House, 154-158 Wing Lok Street G/F, Shops A and B, Sheung Wan, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 1763,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Yee Shun Milk Company|506 Lockhart Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.0,
+    "google_reviews": 1437,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Zagin Soba 座銀 Central|7 Gough St, Central, Hong Kong": {
+    "google_rating": 4.2,
+    "google_reviews": 729,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "再睡5分鐘 NAP TEA - 灣仔店|Hong Kong, Wan Chai, Mallory St, 7號G05舖": {
+    "google_rating": 4.1,
+    "google_reviews": 27,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Lady 13 Kitchen|Hong Kong, Tsim Sha Tsui, Prat Ave, 22-24號, Valiant Commercial Building, 地下A 鋪": {
+    "google_rating": 4.8,
+    "google_reviews": 605,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "宀 Club|4F, 279-281 Des Voeux Rd Central, Sheung Wan, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 118,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Pot of Soup|Sik On House, 54-66號 Hill Rd, Shek Tong Tsui, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 314,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "日山 Hiyama (合和酒店)|Shop 416, Hopewell Mall, 15 Kennedy Rd, Wan Chai, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 53,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "月山 Gassan Hong Kong|19/F, H Queen's, 80 Queen's Road Central, Central, Hong Kong": {
+    "google_rating": 4.6,
+    "google_reviews": 78,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Yakiniku Ishidaya|Shop 1001, 10/F, World Trade Center, 280 Gloucester Rd, Causeway Bay, Hong Kong": {
+    "google_rating": 4.3,
+    "google_reviews": 444,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "田中燒肉店|Hong Kong, Wan Chai, St Francis St, 12號G/F12": {
+    "google_rating": 4.6,
+    "google_reviews": 11,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "腸粉皇茶餐廳|Hong Kong, Sheung Wan, Jervois St, 123號地下": {
+    "google_rating": 4.3,
+    "google_reviews": 47,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "酒未 Zau Mei Wine Bar|33 Ship St, Wan Chai, Hong Kong": {
+    "google_rating": 4.5,
+    "google_reviews": 68,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "霞飛飛 Xia Fei Fei|Hong Kong, Central, Queen's Road Central, 33號至33號a": {
+    "google_rating": 3.9,
+    "google_reviews": 309,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "鵝頸橋四季火鍋|Hong Kong, Wan Chai, Jaffe Rd, 414-424號f chinawal centreshop 1&2 g": {
+    "google_rating": 4.3,
+    "google_reviews": 138,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Shugetsu (Central)|5 Gough St, Central, Hong Kong": {
+    "google_rating": 4.2,
+    "google_reviews": 1010,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Milu Thai มิลู่ไทย (亞士厘道)|亞士厘道24-38號天星大廈4樓": {
+    "google_rating": 4.6,
+    "google_reviews": 447,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "泰濃麵 (樂道)|樂道7號嘉樂大廈地下A號舖": {
+    "google_rating": 4.2,
+    "google_reviews": 817,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "沃川自家料理|麼地道75號南洋中心UG樓5-8號舖": {
+    "google_rating": 4.4,
+    "google_reviews": 26,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Coffee by Zion|西營盤第一街83號地下1號舖": {
+    "google_rating": 4.2,
+    "google_reviews": 539,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "臺北棧 (港威商場)|廣東道3-27號海港城港威商場2樓2204-6號舖": {
+    "google_rating": 4.2,
+    "google_reviews": 266,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "本命鐵板燒|邊寧頓街13號2樓": {
+    "google_rating": 4.6,
+    "google_reviews": 113,
+    "resolved": true,
+    "last_updated": "2026-04-13"
+  },
+  "Espresso Alchemy (海港城港威商場)|廣東道3-27號海港城港威商場地下G104號舖": {
+    "google_rating": 4.5,
+    "google_reviews": 490,
+    "resolved": true,
+    "last_updated": "2026-04-13"
   }
 }
