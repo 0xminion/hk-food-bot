@@ -81,11 +81,15 @@ def build_google_maps_url(place: Place) -> str:
 def format_recommendation(place: Place, idx: int) -> str:
     """Format a single place recommendation block for Telegram."""
     name_line = f"<b>{idx}. {place.name}</b>"
+
+    ratings = []
     if place.google_rating > 0:
         review_text = f" ({place.review_count} reviews)" if place.review_count else ""
-        name_line += f" ⭐ {place.google_rating}{review_text}"
-    elif place.or_rating > 0:
-        name_line += f" ⭐ {place.or_rating} (OR)"
+        ratings.append(f"⭐ {place.google_rating}{review_text}")
+    if place.or_rating > 0:
+        ratings.append(f"⭐ {round(place.or_rating, 2)} (OR)")
+    if ratings:
+        name_line += " " + " · ".join(ratings)
 
     lines = [name_line]
 

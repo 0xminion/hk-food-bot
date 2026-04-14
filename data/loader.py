@@ -64,7 +64,11 @@ def _safe_int(value: str, default: int = 0) -> int:
 
 def _parse_closed_status(*values: str) -> bool:
     text = " ".join(v for v in values if v).lower()
-    return any(token in text for token in ("temporarily closed", "permanently closed", "closed"))
+    closed_tokens = (
+        "temporarily closed", "permanently closed", "closed down",
+        "已結業", "永久停業", "暫停營業", "歇業",
+    )
+    return any(token in text for token in closed_tokens)
 
 
 def load_closed_places(data_dir: str | Path) -> set[str]:
