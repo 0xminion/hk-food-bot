@@ -171,15 +171,24 @@ def resolve_venue(name: str, address: str) -> Optional[dict]:
 
 
 def _accept_consent(page):
-    """Click the Google consent accept button if present."""
+    """Click the Google consent accept button if present (multi-language)."""
     try:
         buttons = page.locator("button")
         for i in range(buttons.count()):
-            btn_text = buttons.nth(i).inner_text().lower()
-            if "accept" in btn_text or "akzeptieren" in btn_text:
+            try:
+                btn_text = buttons.nth(i).inner_text().lower()
+            except Exception:
+                continue
+            if any(kw in btn_text for kw in ["accept", "akzeptieren", "tout accepter", "aceptar", "i agree"]):
                 buttons.nth(i).click()
                 time.sleep(2)
                 return True
+        # Fallback: any button in a consent form
+        form_btns = page.locator("form[action*='consent'] button")
+        if form_btns.count() > 0:
+            form_btns.first.click()
+            time.sleep(2)
+            return True
     except Exception:
         pass
     return False
