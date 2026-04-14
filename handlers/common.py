@@ -84,6 +84,8 @@ def format_recommendation(place: Place, idx: int) -> str:
     if place.google_rating > 0:
         review_text = f" ({place.review_count} reviews)" if place.review_count else ""
         name_line += f" ⭐ {place.google_rating}{review_text}"
+    elif place.or_rating > 0:
+        name_line += f" ⭐ {place.or_rating} (OR)"
 
     lines = [name_line]
 
@@ -139,12 +141,13 @@ def format_recommendations_message(
     place_type: str,
     crossover: str = "",
     expanded: bool = False,
+    start_idx: int = 1,
 ) -> str:
     """Format the full recommendations message."""
     type_label = "🍽 Restaurants" if place_type == "restaurant" else "🍸 Bars"
     header = f"{type_label} in <b>{area_name}</b>:\n\n"
 
-    body = "\n\n".join(format_recommendation(p, i + 1) for i, p in enumerate(places))
+    body = "\n\n".join(format_recommendation(p, start_idx + i) for i, p in enumerate(places))
 
     footer_parts = []
     if expanded and crossover:

@@ -1,11 +1,167 @@
 # Personal exclusion list — "minion abc" Google Maps list
-# One place name per line. These places will be excluded from recommendations
-# because you've already been there.
-#
-# Add your Google Maps "minion abc" saved places here.
-# The bot will filter these out so you only get NEW recommendations.
-#
-# Example:
-# Yardbird
-# 大班樓
-# Samsen 泰麵
+# Auto-populated from source='google_maps' in merged_places.csv
+# These places are excluded from recommendations (you've already been there).
+# Total: 162 unique places
+
+001
+18 Grams Speciality Coffee
+ARGO
+Artemis & Apollo
+Associazione Chianti
+BACI Trattoria & Bar
+Bakehouse
+Bakehouse (Wan Chai)
+Banh Mi Nem
+Bar Leone
+Bar Mind 念
+Bayi
+Beanmountain
+Brass Spoon Wanchai
+Busy Bird
+BÀRBAR
+Calle Ocho
+Carbone Hong Kong
+Check In Taipei (Causeway Bay)
+Cheung Hing Kee Shanghai Pan-Fried Buns - Wan Chai
+Chukfo Taipan Restaurant
+Chutney Tandoor House
+Cong dessert
+Courtroom
+Crushed Wine Bar + Retail
+Cô Thành Restaurant
+Dirty Laundry HK
+Dr. Fern's Gin Parlour
+Dragonfly
+Eight Treasures
+FAT J Char Siu
+FRANCIS
+Feather & Bone
+Fiata Pizza
+Florence Trippa
+Foxglove
+Fung Mei Steam Food
+GOKAN
+Giando Italian Restaurant & Bar
+Ginza Kagari
+Green Tea (Hysan Place)
+Gutshot
+HEXA
+HK Jebn Limited
+Han Ah Rum Korean Restaurant 韓雅林
+He Says Lounge
+Hikiniku to Come (IFC Mall)
+Ho Ho Restaurant
+Hugger Mugger
+Hung’s delicacies
+Hutong
+Infree Records
+Inoshishi
+Jenny Bakery Tsim Sha Tsui
+Jeonpo Meat Shop (Wan Chai)
+Kai Kai Dessert
+Kam's Roast Goose
+Kokoro Tokyo Mazesoba (Wan Chai)
+Lady 13 Kitchen
+Lau Haa Hot Pot Restaurant
+Le Colvert
+Leela
+LucAle Tasting Italy
+MONO LAB
+Maggie Choo's Hong Kong
+Maru Korean Restaurant Pub
+Megan's Kitchen
+Mo Keung To
+Mona
+Montana
+Moonkok (Central)
+Motorino SoHo
+Mott 32
+N1 Coffee & Co. (Wan Chai)
+Nanhai No.2
+Nocino Tai hang
+Noda Coffee
+Nook Coffee
+Olé Spanish Restaurant
+Osteria Marzia
+Panyin Shabu
+Pica Pica
+Pici
+Pistol Bar & Shisha Lounge
+Polar Lounge
+Popinjays
+Porker
+Pot of Soup
+Prince and The Peacock
+Quinary
+Ramen Cubism
+Restoran Saya
+Ripples
+Samsen (Central)
+Samsen (Wan Chai)
+Samsen Sheung Wan
+San Xi Lou
+Sensu (Times Square)
+She Says Lounge
+Shugetsu (Central)
+SiJie Sichuan Restaurant
+Sister Wah Beef Brisket
+Skewer Kitchen (Central)
+Socio Hong Kong
+Stellar House 星月居
+Stockton
+Sushi Yoshi
+SìpSip Rooftop Bar
+Tan’s Gourmet
+Tell Camellia
+Thai Pai Dong
+The Aubrey
+The Chairman Restaurant
+The Chinese Library
+The Green Door
+The Hideout Hong Kong
+The Iron Fairies Hong Kong
+The Old Book Store
+The Old Man
+The Optimist
+The Parallel
+The Savory Project
+The Social Den HK
+The Wise King - SOHO, Hong Kong.
+ThongSmith Hong Kong
+Tian Tian Hainanese Chicken Rice
+TokyoLima
+Tomacado花廚 Hong Kong
+TopTown
+Tori Izakaya
+Trattoria Felino
+Treasure Hikari 菲林相機店
+Unagi Yondaime Kikukawa Causeway Bay
+Van Gogh Kitchen
+Vission Bakery
+WING Restaurant
+Waso Cafe (Tsim Sha Tsui)
+Waso Cafe (Wan Chai)
+YAOWARAT
+Yakiniku Ishidaya
+Yakiniku Luigi
+Yardbird
+Yee Shun Milk Company
+Yi Jia
+Yu Dan Don
+ZZURA
+Zagin Soba 座銀 Central
+九龍城寨 (Bar & Restaurant)
+再睡5分鐘 NAP TEA - 灣仔店
+宀 Club
+富臨飯店 Forum Restaurant
+日山 Hiyama (合和酒店)
+晶晶甜品 Ching Ching Desserts
+月山 Gassan Hong Kong
+榴槤B哥
+潮式腸粉家菜館
+濃姐石磨腸粉
+田中燒肉店
+腸粉皇茶餐廳
+酒未 Zau Mei Wine Bar
+霞飛飛 Xia Fei Fei
+鵝頸橋四季火鍋

@@ -142,8 +142,20 @@ async def handle_more_recommendations(update: Update, context: ContextTypes.DEFA
         crossover=result.crossover_suggestion,
         expanded=result.expanded_search,
     )
+    # Number the appended results continuing from previous count
+    prev_count = len(state.get("shown_place_names", []))
+    if prev_count > 0:
+        message = format_recommendations_message(
+            places=result.places,
+            area_name=state.get("area_name", "Unknown"),
+            place_type=state.get("place_type", "restaurant"),
+            crossover=result.crossover_suggestion,
+            expanded=result.expanded_search,
+            start_idx=prev_count + 1,
+        )
+        message = f"─── More results ───\n\n{message}"
     try:
-        await query.edit_message_text(
+        await query.message.reply_text(
             message,
             parse_mode="HTML",
             disable_web_page_preview=True,

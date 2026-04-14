@@ -276,7 +276,22 @@ def recommend(
     else:
         candidates = nearby
 
-    # Step 7: Score and rank
+    # Step 7: Deduplicate franchises (same name) — keep closest to user
+    if candidates:
+        seen: dict[str, Place] = {}
+        for p in candidates:
+            key = p.name.lower()
+            if key not in seen:
+                seen[key] = p
+            else:
+                # Keep the one closer to the user
+                existing = seen[key]
+                if (p.distance_walk_m or 99999) < (existing.distance_walk_m or 99999):
+                    seen[key] = p
+        candidates = list(seen.values())
+        logger.info(f"Step 6.5 - Franchise dedup: {len(candidates)} unique names")
+
+    # Step 8: Score and rank
     if not candidates:
         logger.warning("No candidates found for recommendation")
         return result
