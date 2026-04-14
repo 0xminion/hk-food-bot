@@ -193,6 +193,7 @@ async def drink_other_cuisine_received(update: Update, context: ContextTypes.DEF
         cuisine=drink_type,
         area_name=area_name,
     )
+    shown_names = [p.name for p in result.places]
     message = format_recommendations_message(
         places=result.places,
         area_name=area_name,
@@ -207,6 +208,7 @@ async def drink_other_cuisine_received(update: Update, context: ContextTypes.DEF
         "lat": lat,
         "lng": lng,
         "cuisine": drink_type,
+        "shown_place_names": shown_names,
     }
     await update.message.reply_text(
         message,
