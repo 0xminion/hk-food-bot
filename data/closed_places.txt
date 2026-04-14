@@ -1,0 +1,6 @@
+# Closed places — manually verified
+# One place name per line. These are known closed (temp or permanent)
+# and should never appear in recommendations.
+#
+# Add places here as you discover them.
+Top Spin Limited

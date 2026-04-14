@@ -1,0 +1,11 @@
+# Personal exclusion list — "minion abc" Google Maps list
+# One place name per line. These places will be excluded from recommendations
+# because you've already been there.
+#
+# Add your Google Maps "minion abc" saved places here.
+# The bot will filter these out so you only get NEW recommendations.
+#
+# Example:
+# Yardbird
+# 大班樓
+# Samsen 泰麵

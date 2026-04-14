@@ -28,6 +28,7 @@ class Place:
     opening_hours: str = ""
     source_url: str = ""
     is_secret_gem: bool = False
+    is_closed: bool = False
     last_updated: str = ""
     source: str = ""
     distance_walk_m: int = 0
@@ -59,6 +60,39 @@ def _safe_int(value: str, default: int = 0) -> int:
         return int(float(value)) if value else default
     except (ValueError, TypeError):
         return default
+
+
+def _parse_closed_status(*values: str) -> bool:
+    text = " ".join(v for v in values if v).lower()
+    return any(token in text for token in ("temporarily closed", "permanently closed", "closed"))
+
+
+def load_closed_places(data_dir: str | Path) -> set[str]:
+    """Load manually verified closed place names from closed_places.txt."""
+    path = Path(data_dir) / "closed_places.txt"
+    if not path.exists():
+        return set()
+    names = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            names.add(line.lower())
+    logger.info(f"Loaded {len(names)} closed places from {path}")
+    return names
+
+
+def load_personal_exclusions(data_dir: str | Path) -> set[str]:
+    """Load personal exclusion list (e.g. minion abc) from exclude_personal.txt."""
+    path = Path(data_dir) / "exclude_personal.txt"
+    if not path.exists():
+        return set()
+    names = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            names.add(line.lower())
+    logger.info(f"Loaded {len(names)} personal exclusions from {path}")
+    return names
 
 
 def load_places(csv_path: str | Path) -> list[Place]:
@@ -113,6 +147,7 @@ def load_places(csv_path: str | Path) -> list[Place]:
                     opening_hours=(row.get("opening_hours") or "").strip(),
                     source_url=(row.get("source_url") or "").strip(),
                     is_secret_gem=(row.get("is_secret_gem") or "false").lower() in ("1", "true"),
+                    is_closed=_parse_closed_status(row.get("status") or "", row.get("opening_hours") or "", row.get("source_url") or ""),
                     last_updated=(row.get("last_updated") or "").strip(),
                     source=(row.get("source") or "").strip(),
                 ))
@@ -160,6 +195,12 @@ def filter_by_cuisine(places: list[Place], cuisines: list[str]) -> list[Place]:
     """Filter places that match any of the given cuisine tags."""
     cuisine_set = {c.lower() for c in cuisines}
     return [p for p in places if cuisine_set & set(p.cuisine_tags)]
+
+
+def filter_by_any_tag(places: list[Place], tags: list[str]) -> list[Place]:
+    """Filter places that match any cuisine or style tag."""
+    tag_set = {t.lower() for t in tags}
+    return [p for p in places if tag_set & (set(p.cuisine_tags) | set(p.style_tags))]
 
 
 def get_all_places(csv_path: str | Path) -> list[Place]:

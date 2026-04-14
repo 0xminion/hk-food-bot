@@ -6,24 +6,47 @@ Flow: /drink? → area picker → cuisine picker → 5 bar recommendations
 
 import logging
 import random
+import re
 from pathlib import Path
 
 from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler
+from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters
 
 from data.loader import get_all_places
-from engine.recommender import recommend, get_available_cuisines
-from engine.taste import get_cuisine_weight
+from engine.recommender import recommend, get_available_spot_types
 from handlers.common import (
+    CUISINE,
+    LOCATION,
+    OTHER_INPUT,
+    SURPRISE_LOCATION,
     HK_AREAS,
     build_area_keyboard,
     build_cuisine_keyboard,
+    build_location_request_keyboard,
+    build_more_button_keyboard,
     format_recommendations_message,
 )
 
 logger = logging.getLogger(__name__)
 
-LOCATION, CUISINE = range(2)
+def _get_places_from_cache(context: ContextTypes.DEFAULT_TYPE):
+    config = context.bot_data.get("config", {})
+    csv_path = Path(context.bot_data.get("bot_dir", ".")) / config.get("data", {}).get("places_csv", "data/merged_places.csv")
+    all_places = context.bot_data.get("_cached_places")
+    if all_places is None:
+        all_places = get_all_places(csv_path)
+        context.bot_data["_cached_places"] = all_places
+    context.user_data["all_places"] = all_places
+    return all_places
+
+
+def _build_cuisine_suggestions(all_places, area_name, lat, lng):
+    cuisines = get_available_spot_types(all_places, lat, lng, area_name=area_name)
+    if not cuisines:
+        return []
+    choices = list(dict.fromkeys(cuisines[:10]))
+    random.shuffle(choices)
+    return choices
 
 
 async def drink_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -56,19 +79,10 @@ async def drink_location_chosen(update: Update, context: ContextTypes.DEFAULT_TY
     lat, lng = HK_AREAS[area_name]
     context.user_data["location"] = (area_name, lat, lng)
 
-    # Load data (cached in bot_data to avoid re-reading CSV on every request)
-    config = context.bot_data.get("config", {})
-    csv_path = Path(context.bot_data.get("bot_dir", ".")) / config.get("data", {}).get("places_csv", "data/merged_places.csv")
-    all_places = context.bot_data.get("_cached_places")
-    if all_places is None:
-        all_places = get_all_places(csv_path)
-        context.bot_data["_cached_places"] = all_places
-    context.user_data["all_places"] = all_places
+    all_places = _get_places_from_cache(context)
+    suggestions = _build_cuisine_suggestions(all_places, area_name, lat, lng)
 
-    # Get available bar types for this area
-    bar_types = get_available_cuisines(all_places, "bar", lat, lng)
-
-    if not bar_types:
+    if not suggestions:
         try:
             await query.edit_message_text(
                 f"😅 No bars found in {area_name}. Try another area!",
@@ -77,13 +91,6 @@ async def drink_location_chosen(update: Update, context: ContextTypes.DEFAULT_TY
         except Exception:
             logger.error("Failed to edit message for no bar types", exc_info=True)
         return LOCATION
-
-    # Weight toward user preferences
-    weighted = [(c, get_cuisine_weight(c)) for c in bar_types]
-    weighted.sort(key=lambda x: x[1], reverse=True)
-
-    top_pool = [c for c, _ in weighted[:8]]
-    suggestions = random.sample(top_pool, min(5, len(top_pool)))
 
     try:
         await query.edit_message_text(
@@ -98,7 +105,7 @@ async def drink_location_chosen(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def drink_cuisine_chosen(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Handle drink type selection — deliver 5 recommendations."""
+    """Handle drink type selection — either recommend or ask for extra input/location."""
     query = update.callback_query
     try:
         await query.answer()
@@ -106,6 +113,21 @@ async def drink_cuisine_chosen(update: Update, context: ContextTypes.DEFAULT_TYP
         logger.warning("Failed to answer callback query", exc_info=True)
 
     drink_type = query.data.replace("cuisine:", "")
+    if drink_type == "surprise":
+        await query.message.reply_text(
+            "🎲 Surprise mode needs your rough location. Share it below and I’ll keep results within 2km.",
+            reply_markup=build_location_request_keyboard(),
+        )
+        context.user_data["surprise_place_type"] = "bar"
+        return SURPRISE_LOCATION
+
+    if drink_type == "other":
+        await query.message.reply_text(
+            "✍️ Type the drink style you want and I’ll search for it.",
+        )
+        context.user_data["awaiting_cuisine_text"] = True
+        return OTHER_INPUT
+
     all_places = context.user_data.get("all_places", [])
     area_name, lat, lng = context.user_data.get("location", ("Unknown", 22.2783, 114.1747))
 
@@ -114,8 +136,14 @@ async def drink_cuisine_chosen(update: Update, context: ContextTypes.DEFAULT_TYP
         place_type="bar",
         area_lat=lat,
         area_lng=lng,
-        cuisine=drink_type if drink_type != "surprise" else "surprise",
+        cuisine=drink_type,
+        area_name=area_name,
     )
+
+    shown_names = [p.name for p in result.places]
+    exclude_names = set(context.user_data.get("exclude_place_names", []))
+    exclude_names.update(shown_names)
+    context.user_data["exclude_place_names"] = sorted(exclude_names)
 
     message = format_recommendations_message(
         places=result.places,
@@ -125,12 +153,112 @@ async def drink_cuisine_chosen(update: Update, context: ContextTypes.DEFAULT_TYP
         expanded=result.expanded_search,
     )
 
+    context.user_data["last_recommendation"] = {
+        "flow": "drink",
+        "place_type": "bar",
+        "area_name": area_name,
+        "lat": lat,
+        "lng": lng,
+        "cuisine": drink_type,
+        "shown_place_names": shown_names,
+    }
+
     try:
         await query.edit_message_text(
             message,
             parse_mode="HTML",
             disable_web_page_preview=True,
+            reply_markup=None if result.expanded_search else build_more_button_keyboard("drink"),
         )
     except Exception:
         logger.error("Failed to edit message with recommendations", exc_info=True)
+    return ConversationHandler.END
+
+
+async def drink_other_cuisine_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle typed drink style and return recommendations."""
+    text = (update.message.text or "").strip()
+    if not text:
+        await update.message.reply_text("Type a style name, e.g. cocktail bar, speakeasy, wine bar.")
+        return OTHER_INPUT
+
+    drink_type = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    all_places = context.user_data.get("all_places", [])
+    area_name, lat, lng = context.user_data.get("location", ("Unknown", 22.2783, 114.1747))
+    result = recommend(
+        all_places=all_places,
+        place_type="bar",
+        area_lat=lat,
+        area_lng=lng,
+        cuisine=drink_type,
+        area_name=area_name,
+    )
+    message = format_recommendations_message(
+        places=result.places,
+        area_name=area_name,
+        place_type="bar",
+        crossover=result.crossover_suggestion,
+        expanded=result.expanded_search,
+    )
+    context.user_data["last_recommendation"] = {
+        "flow": "drink",
+        "place_type": "bar",
+        "area_name": area_name,
+        "lat": lat,
+        "lng": lng,
+        "cuisine": drink_type,
+    }
+    await update.message.reply_text(
+        message,
+        parse_mode="HTML",
+        disable_web_page_preview=True,
+        reply_markup=None if result.expanded_search else build_more_button_keyboard("drink"),
+    )
+    return ConversationHandler.END
+
+
+async def drink_surprise_location_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle shared location for surprise mode."""
+    location = update.message.location
+    if not location:
+        await update.message.reply_text("Please tap the location button so I can find nearby bars.")
+        return SURPRISE_LOCATION
+
+    all_places = context.user_data.get("all_places", [])
+    lat, lng = location.latitude, location.longitude
+    result = recommend(
+        all_places=all_places,
+        place_type="bar",
+        area_lat=lat,
+        area_lng=lng,
+        cuisine="surprise",
+        max_distance_m=2000,
+        area_name=None,
+    )
+    shown_names = [p.name for p in result.places]
+    exclude_names = set(context.user_data.get("exclude_place_names", []))
+    exclude_names.update(shown_names)
+    context.user_data["exclude_place_names"] = sorted(exclude_names)
+    message = format_recommendations_message(
+        places=result.places,
+        area_name="Near you",
+        place_type="bar",
+        crossover=result.crossover_suggestion,
+        expanded=result.expanded_search,
+    )
+    context.user_data["last_recommendation"] = {
+        "flow": "drink",
+        "place_type": "bar",
+        "area_name": "Near you",
+        "lat": lat,
+        "lng": lng,
+        "cuisine": "surprise",
+        "shown_place_names": shown_names,
+    }
+    await update.message.reply_text(
+        message,
+        parse_mode="HTML",
+        disable_web_page_preview=True,
+        reply_markup=None if result.expanded_search else build_more_button_keyboard("drink"),
+    )
     return ConversationHandler.END
