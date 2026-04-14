@@ -77,6 +77,31 @@ def _normalize_name(name: str) -> str:
     return re.sub(r'\s*\([^)]*\)\s*$', '', name).strip().lower()
 
 
+def _filter_bottom_percentile(places: list[Place], percentile: int = 20) -> list[Place]:
+    """Remove places in the bottom N percentile by rating."""
+    if not places:
+        return places
+
+    # Get best available rating for each place
+    ratings = []
+    for p in places:
+        best = max(p.google_rating or 0, p.or_rating or 0)
+        ratings.append(best)
+
+    # Only filter if we have enough rated places
+    rated = [r for r in ratings if r > 0]
+    if len(rated) < 10:
+        return places  # Not enough data to filter
+
+    # Calculate cutoff
+    rated_sorted = sorted(rated)
+    cutoff_idx = int(len(rated_sorted) * percentile / 100)
+    cutoff = rated_sorted[cutoff_idx] if cutoff_idx < len(rated_sorted) else 0
+
+    # Filter: keep places with rating above cutoff OR unrated (give unrated a chance)
+    return [p for p in places if max(p.google_rating or 0, p.or_rating or 0) >= cutoff or max(p.google_rating or 0, p.or_rating or 0) == 0]
+
+
 def _resolve_area_coord(area_name: str) -> tuple[float, float] | None:
     if area_name in HK_AREAS:
         return HK_AREAS[area_name]
@@ -266,19 +291,33 @@ def recommend(
 
         candidates = matched
     elif cuisine == "surprise":
-        # Serendipitous mode
+        # Serendipitous mode — pick a random cuisine, avoid bakery/dessert bias
         preferred = [c[0] for c in get_top_cuisines(10)]
         all_cuisines = list({tag for p in nearby for tag in p.cuisine_tags})
-        surprise_cuisine = get_serendipitous_cuisine(preferred, all_cuisines)
+
+        # Exclude low-value surprise picks
+        surprise_blacklist = {"bakery", "dessert", "cafe", "brunch"}
+        filtered_cuisines = [c for c in all_cuisines if c not in surprise_blacklist]
+
+        surprise_cuisine = get_serendipitous_cuisine(preferred, filtered_cuisines)
 
         if surprise_cuisine:
             candidates = filter_by_cuisine(nearby, [surprise_cuisine])
             result.crossover_suggestion = surprise_cuisine
             logger.info(f"Step 6 - Surprise ({surprise_cuisine}): {len(candidates)} places")
             if len(candidates) < num_results:
-                candidates = nearby
+                # Fill with diverse cuisines, not just all nearby
+                candidates_names = {p.name for p in candidates}
+                diverse_pool = [p for p in nearby if p.name not in candidates_names and not any(t in surprise_blacklist for t in p.cuisine_tags)]
+                random.shuffle(diverse_pool)
+                candidates.extend(diverse_pool[:num_results - len(candidates)])
         else:
-            candidates = nearby
+            # Random pick from diverse pool
+            diverse_pool = [p for p in nearby if not any(t in surprise_blacklist for t in p.cuisine_tags)]
+            if diverse_pool:
+                candidates = diverse_pool
+            else:
+                candidates = nearby
     else:
         candidates = nearby
 
@@ -297,7 +336,13 @@ def recommend(
         candidates = list(seen.values())
         logger.info(f"Step 7 - Franchise dedup: {len(candidates)} unique names")
 
-    # Step 8: Score and rank
+    # Step 8: Filter bottom 20% by rating
+    if candidates:
+        before = len(candidates)
+        candidates = _filter_bottom_percentile(candidates, percentile=20)
+        logger.info(f"Step 8 - Bottom 20% filter: {before - len(candidates)} removed")
+
+    # Step 9: Score and rank
     if not candidates:
         logger.warning("No candidates found for recommendation")
         return result

@@ -1,0 +1,66 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "updated": "2026-04-14",
+    "sources": ["michelin", "timeout", "50best", "blackpearl", "opentable"]
+  },
+  "awards": [
+    {"name": "Amber", "source": "michelin", "level": "3-star", "year": 2024, "cuisine": "french"},
+    {"name": "Caprice", "source": "michelin", "level": "3-star", "year": 2024, "cuisine": "french"},
+    {"name": "Forum", "source": "michelin", "level": "3-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "L'Atelier de Joël Robuchon", "source": "michelin", "level": "3-star", "year": 2024, "cuisine": "french"},
+    {"name": "Lung King Heen", "source": "michelin", "level": "3-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Sushi Shikon", "source": "michelin", "level": "3-star", "year": 2024, "cuisine": "japanese"},
+    {"name": "T'ang Court", "source": "michelin", "level": "3-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "The Chairman", "source": "michelin", "level": "3-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Tatler Dining", "source": "michelin", "level": "3-star", "year": 2024, "cuisine": "japanese"},
+
+    {"name": "Arbor", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "japanese"},
+    {"name": "Bo Innovation", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Épure", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "french"},
+    {"name": "Fu Ho", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Hakuba", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "japanese"},
+    {"name": "Kaiseki Den by Saotome", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "japanese"},
+    {"name": "Man Wah", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Ming Court", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Pierre", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "french"},
+    {"name": "Ryu Gin", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "japanese"},
+    {"name": "Shang Palace", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Sushi Saito", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "japanese"},
+    {"name": "Summer Palace", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Ta Vie", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "japanese"},
+    {"name": "The Table", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "french"},
+    {"name": "Tin Lung Heen", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Ying Jee Club", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "chinese"},
+    {"name": "Ying Restaurant", "source": "michelin", "level": "2-star", "year": 2024, "cuisine": "chinese"},
+
+    {"name": "The Old Man", "source": "50best", "level": "asia-50-best-bars", "year": 2023, "cuisine": "cocktail-bar"},
+    {"name": "Coa", "source": "50best", "level": "asia-50-best-bars", "year": 2023, "cuisine": "cocktail-bar"},
+    {"name": "Argo", "source": "50best", "level": "asia-50-best-bars", "year": 2023, "cuisine": "cocktail-bar"},
+    {"name": "Darkside", "source": "50best", "level": "asia-50-best-bars", "year": 2023, "cuisine": "cocktail-bar"},
+    {"name": "Penicillin", "source": "50best", "level": "asia-50-best-bars", "year": 2023, "cuisine": "cocktail-bar"},
+    {"name": "Quinary", "source": "50best", "level": "asia-50-best-bars", "year": 2023, "cuisine": "cocktail-bar"},
+    {"name": "Stockton", "source": "50best", "level": "asia-50-best-bars", "year": 2023, "cuisine": "speakeasy"},
+
+    {"name": "Andō", "source": "50best", "level": "asia-50-best", "year": 2023, "cuisine": "spanish"},
+    {"name": "Neighborhood", "source": "50best", "level": "asia-50-best", "year": 2023, "cuisine": "french"},
+    {"name": "Mono", "source": "50best", "level": "asia-50-best", "year": 2023, "cuisine": "french"},
+    {"name": "Wing Restaurant", "source": "50best", "level": "asia-50-best", "year": 2023, "cuisine": "chinese"},
+
+    {"name": "Hutong", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "chinese"},
+    {"name": "Yardbird", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "japanese"},
+    {"name": "Samsen", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "thai"},
+    {"name": "Carbone Hong Kong", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "italian"},
+    {"name": "Mott 32", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "chinese"},
+    {"name": "Pici", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "italian"},
+    {"name": "Ta Pai Dong", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "thai"},
+    {"name": "Okra", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "japanese"},
+    {"name": "Roganic", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "british"},
+    {"name": "Belon", "source": "timeout", "level": "best-restaurants", "year": 2024, "cuisine": "french"},
+
+    {"name": "The Aubrey", "source": "timeout", "level": "best-bars", "year": 2024, "cuisine": "cocktail-bar"},
+    {"name": "Bar Leone", "source": "timeout", "level": "best-bars", "year": 2024, "cuisine": "cocktail-bar"},
+    {"name": "Foxglove", "source": "timeout", "level": "best-bars", "year": 2024, "cuisine": "speakeasy"},
+    {"name": "Tell Camellia", "source": "timeout", "level": "best-bars", "year": 2024, "cuisine": "cocktail-bar"}
+  ]
+}

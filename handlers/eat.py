@@ -13,6 +13,7 @@ from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters
 
 from data.loader import get_all_places
+from data.loader import filter_by_type
 from engine.recommender import recommend, get_available_cuisines
 from handlers.common import (
     CUISINE,
@@ -177,23 +178,44 @@ async def eat_cuisine_chosen(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def eat_other_cuisine_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Handle typed-in cuisine and return recommendations."""
+    """Handle typed-in cuisine and return recommendations. Supports fuzzy regional matching."""
     text = (update.message.text or "").strip()
     if not text:
-        await update.message.reply_text("Type a cuisine name, e.g. Thai, Lebanese, French.")
+        await update.message.reply_text("Type a cuisine name, e.g. Thai, Lebanese, French, SEA, EU.")
         return OTHER_INPUT
 
-    cuisine = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    from engine.cuisine_groups import resolve_cuisine_input
+    cuisine_tags = resolve_cuisine_input(text)
+
     all_places = context.user_data.get("all_places", [])
     area_name, lat, lng = context.user_data.get("location", ("Unknown", 22.2783, 114.1747))
-    result = recommend(
-        all_places=all_places,
-        place_type="restaurant",
-        area_lat=lat,
-        area_lng=lng,
-        cuisine=cuisine,
-        area_name=area_name,
-    )
+
+    if len(cuisine_tags) == 1:
+        # Single cuisine — use normal flow
+        cuisine = cuisine_tags[0]
+        result = recommend(
+            all_places=all_places,
+            place_type="restaurant",
+            area_lat=lat,
+            area_lng=lng,
+            cuisine=cuisine,
+            area_name=area_name,
+        )
+    else:
+        # Regional group — search for all matching cuisines
+        from data.loader import filter_by_cuisine
+        scope_radius = 2000 if area_name else 25000
+        from engine.recommender import _filter_nearby_places
+        nearby = _filter_nearby_places(
+            filter_by_type(all_places, "restaurant"),
+            area_name, lat, lng, scope_radius
+        )
+        matched = filter_by_cuisine(nearby, cuisine_tags)
+        from engine.recommender import RecommendationResult
+        result = RecommendationResult(places=matched[:5])
+        result.crossover_suggestion = text
+        result.expanded_search = True
+
     shown_names = [p.name for p in result.places]
     exclude_names = set(context.user_data.get("exclude_place_names", []))
     exclude_names.update(shown_names)

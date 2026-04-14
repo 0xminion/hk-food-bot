@@ -64,10 +64,12 @@ class ScoredPlace:
     place: object  # Will be Place type
     taste_score: float
     bonus_gem: float = 0.0
+    bonus_award: float = 0.0
+    bonus_rating: float = 0.0
 
     @property
     def total_score(self) -> float:
-        return self.taste_score + self.bonus_gem
+        return self.taste_score + self.bonus_gem + self.bonus_award + self.bonus_rating
 
 
 def get_cuisine_weight(cuisine_tag: str) -> float:
@@ -93,15 +95,43 @@ def score_place(place) -> float:
     return max_weight * 0.7 + avg_weight * 0.3
 
 
-def score_and_rank_places(places: list) -> list[ScoredPlace]:
+def score_and_rank_places(places: list, data_dir=None) -> list[ScoredPlace]:
     """
-    Score all places and return them sorted by taste score descending.
+    Score all places and return them sorted by total score descending.
+    Includes taste, secret gem, award, and rating bonuses.
     """
+    from pathlib import Path
+    from engine.awards import get_award_boost
+
+    if data_dir is None:
+        data_dir = Path(__file__).parent.parent / "data"
+
     scored = []
     for place in places:
         taste = score_place(place)
         gem_bonus = 0.15 if place.is_secret_gem else 0.0
-        scored.append(ScoredPlace(place=place, taste_score=taste, bonus_gem=gem_bonus))
+
+        # Award bonus: 0-1.0 normalized range
+        award_raw, award_badges = get_award_boost(place.name, data_dir)
+        award_bonus = min(1.0, award_raw / 100.0)  # Normalize to 0-1
+
+        # Rating bonus: boost places with high ratings
+        rating_bonus = 0.0
+        best_rating = max(place.google_rating or 0, place.or_rating or 0)
+        if best_rating >= 4.5:
+            rating_bonus = 0.20
+        elif best_rating >= 4.0:
+            rating_bonus = 0.10
+        elif best_rating >= 3.5:
+            rating_bonus = 0.05
+
+        scored.append(ScoredPlace(
+            place=place,
+            taste_score=taste,
+            bonus_gem=gem_bonus,
+            bonus_award=award_bonus,
+            bonus_rating=rating_bonus,
+        ))
 
     scored.sort(key=lambda s: s.total_score, reverse=True)
     return scored

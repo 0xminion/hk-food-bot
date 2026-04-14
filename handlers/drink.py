@@ -176,23 +176,43 @@ async def drink_cuisine_chosen(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def drink_other_cuisine_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Handle typed drink style and return recommendations."""
+    """Handle typed drink style and return recommendations. Supports fuzzy regional matching."""
     text = (update.message.text or "").strip()
     if not text:
-        await update.message.reply_text("Type a style name, e.g. cocktail bar, speakeasy, wine bar.")
+        await update.message.reply_text("Type a style name, e.g. cocktail bar, speakeasy, wine bar, cocktail.")
         return OTHER_INPUT
 
-    drink_type = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    from engine.cuisine_groups import resolve_cuisine_input
+    cuisine_tags = resolve_cuisine_input(text)
+
     all_places = context.user_data.get("all_places", [])
     area_name, lat, lng = context.user_data.get("location", ("Unknown", 22.2783, 114.1747))
-    result = recommend(
-        all_places=all_places,
-        place_type="bar",
-        area_lat=lat,
-        area_lng=lng,
-        cuisine=drink_type,
-        area_name=area_name,
-    )
+
+    if len(cuisine_tags) == 1:
+        drink_type = cuisine_tags[0]
+        result = recommend(
+            all_places=all_places,
+            place_type="bar",
+            area_lat=lat,
+            area_lng=lng,
+            cuisine=drink_type,
+            area_name=area_name,
+        )
+    else:
+        from data.loader import filter_by_any_tag, filter_by_type
+        scope_radius = 2000 if area_name else 25000
+        from engine.recommender import _filter_nearby_places
+        nearby = _filter_nearby_places(
+            filter_by_type(all_places, "bar"),
+            area_name, lat, lng, scope_radius
+        )
+        matched = filter_by_any_tag(nearby, cuisine_tags)
+        from engine.recommender import RecommendationResult
+        result = RecommendationResult(places=matched[:5])
+        result.crossover_suggestion = text
+        result.expanded_search = True
+        drink_type = text
+
     shown_names = [p.name for p in result.places]
     message = format_recommendations_message(
         places=result.places,

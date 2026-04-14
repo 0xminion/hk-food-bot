@@ -102,6 +102,17 @@ def format_recommendation(place: Place, idx: int) -> str:
     if place.is_secret_gem:
         lines.append("   💎 Secret gem!")
 
+    # Award badges
+    try:
+        from engine.awards import get_award_boost
+        from pathlib import Path
+        data_dir = Path(__file__).parent.parent / "data"
+        _, badges = get_award_boost(place.name, data_dir)
+        if badges:
+            lines.append("   " + " ".join(badges))
+    except Exception:
+        pass
+
     # Cuisine tags
     if place.cuisine_tags:
         lines.append(f"   🍜 Cuisine: {', '.join(place.cuisine_tags)}")
