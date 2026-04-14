@@ -1,6 +1,7 @@
 """CSV data loader and filtering utilities for HK Food Bot."""
 
 import csv
+import json
 import math
 import logging
 from dataclasses import dataclass, field
@@ -99,13 +100,28 @@ def load_personal_exclusions(data_dir: str | Path) -> set[str]:
     return names
 
 
+def _load_google_cache(data_dir: str | Path) -> dict:
+    """Load Google ratings cache for enriching Place objects on load."""
+    path = Path(data_dir) / "google_ratings_cache.json"
+    if not path.exists():
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        logger.info(f"Loaded {len(cache)} Google ratings from cache")
+        return cache
+    except (json.JSONDecodeError, IOError):
+        return {}
+
+
 def load_places(csv_path: str | Path) -> list[Place]:
-    """Load places from CSV file."""
+    """Load places from CSV file, enriched with cached Google ratings."""
     path = Path(csv_path)
     if not path.exists():
         logger.error(f"CSV file not found: {path}")
         return []
 
+    google_cache = _load_google_cache(path.parent)
     places: list[Place] = []
     with open(path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -133,6 +149,14 @@ def load_places(csv_path: str | Path) -> list[Place]:
                 or_rating = max(0.0, min(5.0, _safe_float(row.get("or_rating"))))
 
                 review_count = max(0, _safe_int(row.get("review_count")))
+
+                # Enrich with Google ratings from cache
+                address = (row.get("address") or "").strip()
+                cache_key = f"{name}|{address}"
+                cached = google_cache.get(cache_key, {})
+                if cached.get("google_rating") and not google_rating:
+                    google_rating = max(0.0, min(5.0, float(cached["google_rating"])))
+                    review_count = max(review_count, int(cached.get("google_reviews", 0)))
 
                 places.append(Place(
                     name=name,

@@ -200,7 +200,7 @@ async def drink_other_cuisine_received(update: Update, context: ContextTypes.DEF
         )
     else:
         from data.loader import filter_by_any_tag, filter_by_type
-        scope_radius = 2000 if area_name else 25000
+        scope_radius = 1500 if area_name else 25000
         from engine.recommender import _filter_nearby_places
         nearby = _filter_nearby_places(
             filter_by_type(all_places, "bar"),
@@ -254,7 +254,7 @@ async def drink_surprise_location_received(update: Update, context: ContextTypes
         area_lat=lat,
         area_lng=lng,
         cuisine="surprise",
-        max_distance_m=2000,
+        max_distance_m=1500,
         area_name=None,
     )
     shown_names = [p.name for p in result.places]

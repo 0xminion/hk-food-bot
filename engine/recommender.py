@@ -226,7 +226,7 @@ def recommend(
         logger.info(f"Step 1d - Personal exclusion: {before - len(filtered)} places removed")
 
     # Step 2/3: Filter by proximity
-    scope_radius = 2000 if area_name and area_name in AREA_SCOPE_NEIGHBORS else max_distance_m
+    scope_radius = 1500 if area_name and area_name in AREA_SCOPE_NEIGHBORS else max_distance_m
     nearby = _filter_nearby_places(filtered, area_name, area_lat, area_lng, scope_radius)
     logger.info(f"Step 3 - Proximity filter: {len(nearby)} places")
 
@@ -381,7 +381,7 @@ def get_available_cuisines(
     Used to populate the cuisine selection keyboard.
     """
     filtered = filter_by_type(all_places, place_type)
-    nearby = _filter_nearby_places(filtered, area_name, area_lat, area_lng, 2000 if area_name else 25000)
+    nearby = _filter_nearby_places(filtered, area_name, area_lat, area_lng, 1500 if area_name else 25000)
 
     cuisines = set()
     for place in nearby:
@@ -398,7 +398,7 @@ def get_available_spot_types(
 ) -> list[str]:
     """Return curated drink spot types based on bar-only tags and nearby bar data."""
     filtered = filter_by_type(all_places, "bar")
-    nearby = _filter_nearby_places(filtered, area_name, area_lat, area_lng, 2000 if area_name else 25000)
+    nearby = _filter_nearby_places(filtered, area_name, area_lat, area_lng, 1500 if area_name else 25000)
 
     tags = set()
     for place in nearby:

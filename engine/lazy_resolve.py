@@ -39,14 +39,16 @@ def _save_cache(cache: dict):
     tmp.rename(_CACHE_FILE)
 
 
-def _resolve_single(name: str, address: str) -> Optional[dict]:
-    """Resolve a single venue via Camoufox."""
+def _resolve_worker(venues: list[dict]):
+    """Background worker to resolve venues using a single browser session."""
+    cache = _load_cache()
+    resolved = 0
+
     try:
         from camoufox.sync_api import Camoufox
         import re
         import time
 
-        query = f"{name} {address} Hong Kong"
         with Camoufox(headless=True) as browser:
             page = browser.new_page()
 
@@ -65,48 +67,47 @@ def _resolve_single(name: str, address: str) -> Optional[dict]:
             except Exception:
                 pass
 
-            # Search
-            url = f"https://www.google.com/maps/search/{query.replace(' ', '+')}"
-            page.goto(url, wait_until="domcontentloaded", timeout=15000)
-            time.sleep(3)
+            for v in venues:
+                key = f"{v['name']}|{v['address']}"
+                if key in cache and cache[key].get("google_rating"):
+                    continue
 
-            text = page.inner_text("body")
-            m = re.search(r"(\d[.,]\d)\s*\((\d[\d.,]*)\)", text)
-            if m:
-                rating = float(m.group(1).replace(",", "."))
-                reviews = int(m.group(2).replace(",", "").replace(".", ""))
-                if 1.0 <= rating <= 5.0:
-                    browser.close()
-                    return {"google_rating": rating, "google_reviews": reviews}
+                try:
+                    from urllib.parse import quote_plus
+                    query = f"{v['name']} {v['address']} Hong Kong"
+                    url = f"https://www.google.com/maps/search/{quote_plus(query)}"
+                    page.goto(url, wait_until="domcontentloaded", timeout=15000)
+                    time.sleep(3)
+
+                    text = page.inner_text("body")
+                    m = re.search(r"(\d[.,]\d)\s*\((\d[\d.,]*)\)", text)
+                    if m:
+                        rating = float(m.group(1).replace(",", "."))
+                        reviews = int(m.group(2).replace(",", "").replace(".", ""))
+                        if 1.0 <= rating <= 5.0:
+                            from datetime import datetime, timezone
+                            cache[key] = {
+                                "google_rating": rating,
+                                "google_reviews": reviews,
+                                "resolved": True,
+                                "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                            }
+                            resolved += 1
+                            logger.info(f"Resolved: {v['name']} -> {rating}")
+
+                    time.sleep(1)  # Rate limit
+                except Exception as e:
+                    logger.debug(f"Resolve failed for {v['name']}: {e}")
+                    continue
 
             browser.close()
+
     except Exception as e:
-        logger.debug(f"Lazy resolve failed for {name}: {e}")
-    return None
-
-
-def _resolve_worker(venues: list[dict]):
-    """Background worker to resolve venues."""
-    cache = _load_cache()
-    resolved = 0
-
-    for v in venues:
-        key = f"{v['name']}|{v['address']}"
-        if key in cache and cache[key].get("google_rating"):
-            continue
-
-        result = _resolve_single(v["name"], v["address"])
-        if result:
-            from datetime import datetime, timezone
-            result["resolved"] = True
-            result["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-            cache[key] = result
-            resolved += 1
-            logger.info(f"Lazy resolved: {v['name']} → ⭐{result['google_rating']}")
+        logger.error(f"Batch resolve failed: {e}")
 
     if resolved > 0:
         _save_cache(cache)
-        logger.info(f"Lazy resolve complete: {resolved} venues cached")
+        logger.info(f"Batch resolve complete: {resolved} venues cached")
 
     # Clear resolving set
     with _LOCK:

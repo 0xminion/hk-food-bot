@@ -204,7 +204,7 @@ async def eat_other_cuisine_received(update: Update, context: ContextTypes.DEFAU
     else:
         # Regional group — search for all matching cuisines
         from data.loader import filter_by_cuisine
-        scope_radius = 2000 if area_name else 25000
+        scope_radius = 1500 if area_name else 25000
         from engine.recommender import _filter_nearby_places
         nearby = _filter_nearby_places(
             filter_by_type(all_places, "restaurant"),
@@ -260,7 +260,7 @@ async def eat_surprise_location_received(update: Update, context: ContextTypes.D
         area_lat=lat,
         area_lng=lng,
         cuisine="surprise",
-        max_distance_m=2000,
+        max_distance_m=1500,
         area_name=None,
     )
     shown_names = [p.name for p in result.places]
