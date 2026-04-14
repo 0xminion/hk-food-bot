@@ -80,19 +80,10 @@ def get_cuisine_weight(cuisine_tag: str) -> float:
 
 def score_place(place) -> float:
     """
-    Score a place based on the user's taste profile.
-    Returns a score between 0.0 and 1.0+.
+    Score a place. All cuisines treated equally — base score is uniform.
+    Only differentiators are awards, ratings, and secret gem status.
     """
-    if not place.cuisine_tags:
-        return DEFAULT_CUISINE_WEIGHT
-
-    # Take the best matching cuisine weight
-    weights = [get_cuisine_weight(tag) for tag in place.cuisine_tags]
-    max_weight = max(weights)
-
-    # Small bonus for multiple matching cuisines
-    avg_weight = sum(weights) / len(weights)
-    return max_weight * 0.7 + avg_weight * 0.3
+    return 0.5  # Flat base score for all places
 
 
 def score_and_rank_places(places: list, data_dir=None) -> list[ScoredPlace]:

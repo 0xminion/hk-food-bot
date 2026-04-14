@@ -11,34 +11,33 @@ from data.loader import Place
 
 
 def test_high_preference_cuisine():
-    """Italian should score high (weight 1.0)."""
+    """All cuisines score the same — flat weighting."""
     place = Place(name="Test", type="restaurant", cuisine_tags=["italian"])
     score = score_place(place)
-    assert score >= 0.7
+    assert score == 0.5
 
 
 def test_low_preference_cuisine():
-    """An unknown cuisine should score low."""
+    """Unknown cuisine scores the same as any other — flat weighting."""
     place = Place(name="Test", type="restaurant", cuisine_tags=["obscure-cuisine"])
     score = score_place(place)
-    assert score < 0.3
+    assert score == 0.5
 
 
 def test_no_cuisine_tags():
-    """Place with no cuisine tags gets default weight."""
+    """Place with no cuisine tags gets same flat score."""
     place = Place(name="Test", type="restaurant", cuisine_tags=[])
     score = score_place(place)
-    assert score == 0.2  # DEFAULT_CUISINE_WEIGHT
+    assert score == 0.5
 
 
 def test_multiple_cuisine_bonus():
-    """Place with multiple matching cuisines gets blended score."""
+    """All cuisines score the same regardless of count — flat weighting."""
     single = Place(name="A", type="restaurant", cuisine_tags=["thai"])
     multi = Place(name="B", type="restaurant", cuisine_tags=["thai", "vietnamese"])
     score_single = score_place(single)
     score_multi = score_place(multi)
-    # Thai (0.75) + Vietnamese (0.55) should score differently from just Thai (0.75)
-    assert score_multi != score_single  # Blending changes the score
+    assert score_single == score_multi == 0.5
 
 
 def test_score_and_rank(sample_places):

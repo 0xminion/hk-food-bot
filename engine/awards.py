@@ -11,36 +11,36 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-# Award tier scores — higher = more prestigious
+# Award tier scores — flat line for Michelin, prestige differentiates via source multiplier
 AWARD_SCORES = {
-    # Michelin
-    "3-star": 100,
-    "2-star": 75,
+    # Michelin — flat score for any star/gourmand recognition
+    "3-star": 50,
+    "2-star": 50,
     "1-star": 50,
-    "bib-gourmand": 35,
-    "green-star": 30,
-    "selected": 15,
+    "bib-gourmand": 50,
+    "green-star": 50,
+    "selected": 30,
     # 50 Best
-    "world-50-best": 100,
-    "asia-50-best": 80,
-    "asia-50-best-bars": 70,
+    "world-50-best": 50,
+    "asia-50-best": 50,
+    "asia-50-best-bars": 50,
     # Time Out / Black Pearl
-    "best-restaurants": 25,
-    "best-bars": 25,
-    "black-pearl-diamond": 60,
-    "black-pearl-pearl": 40,
+    "best-restaurants": 30,
+    "best-bars": 30,
+    "black-pearl-diamond": 50,
+    "black-pearl-pearl": 50,
     # OpenTable
     "opentable-diners-choice": 20,
-    "opentable-best": 15,
+    "opentable-best": 20,
 }
 
-# Source prestige multipliers
+# Source prestige multipliers — flat, all sources equal
 SOURCE_MULTIPLIERS = {
-    "michelin": 1.5,
-    "50best": 1.3,
-    "blackpearl": 1.2,
+    "michelin": 1.0,
+    "50best": 1.0,
+    "blackpearl": 1.0,
     "timeout": 1.0,
-    "opentable": 0.8,
+    "opentable": 1.0,
 }
 
 _loaded_awards: dict[str, list[dict]] | None = None
