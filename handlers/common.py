@@ -1,12 +1,18 @@
 """Shared formatting and keyboard utilities for bot handlers."""
 
 import logging
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+import random
+from urllib.parse import quote_plus
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
 from data.loader import Place
 from engine.time_aware import get_open_status_label
 
 logger = logging.getLogger(__name__)
+
+# Conversation states shared across handlers and bot.py
+LOCATION, CUISINE, OTHER_INPUT, SURPRISE_LOCATION = range(4)
 
 # HK area definitions (keyed by short label, value = (lat, lng))
 HK_AREAS = {
@@ -34,23 +40,56 @@ def build_area_keyboard() -> InlineKeyboardMarkup:
 
 
 def build_cuisine_keyboard(cuisines: list[str]) -> InlineKeyboardMarkup:
-    """Build inline keyboard with cuisine options plus surprise me button."""
+    """Build inline keyboard with cuisine options, surprise me, and others."""
+    choices = list(dict.fromkeys(cuisines))[:10]
+    random.shuffle(choices)
     buttons = [
         InlineKeyboardButton(c.title(), callback_data=f"cuisine:{c}")
-        for c in cuisines
+        for c in choices
     ]
     buttons.append(InlineKeyboardButton("🎲 Surprise me!", callback_data="cuisine:surprise"))
+    buttons.append(InlineKeyboardButton("✍️ Others", callback_data="cuisine:other"))
     rows = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
     return InlineKeyboardMarkup(rows)
 
 
+def build_location_request_keyboard() -> ReplyKeyboardMarkup:
+    """Ask the user to share their rough/live location."""
+    return ReplyKeyboardMarkup(
+        [[KeyboardButton("📍 Share my location", request_location=True)]],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
+
+
+def build_more_button_keyboard(flow: str) -> InlineKeyboardMarkup:
+    """Build a compact 'more' action for expanding the current search."""
+    return InlineKeyboardMarkup([[InlineKeyboardButton("➕ More", callback_data=f"more:{flow}")]])
+
+
+def build_google_maps_url(place: Place) -> str:
+    """Build a Google Maps link for a place, preferring actual place URLs if present."""
+    source_url = (place.source_url or "").strip()
+    if source_url.startswith("https://maps.app.goo.gl/"):
+        return source_url
+    if "google.com/maps" in source_url and "q=" not in source_url and "@" not in source_url:
+        return source_url
+    query = f"{place.name} {place.address}".strip()
+    return f"https://www.google.com/maps/search/?api=1&query={quote_plus(query)}"
+
+
 def format_recommendation(place: Place, idx: int) -> str:
     """Format a single place recommendation block for Telegram."""
-    lines = [f"<b>{idx}. {place.name}</b>"]
+    name_line = f"<b>{idx}. {place.name}</b>"
+    if place.google_rating > 0:
+        review_text = f" ({place.review_count} reviews)" if place.review_count else ""
+        name_line += f" ⭐ {place.google_rating}{review_text}"
+
+    lines = [name_line]
 
     # Google Maps link
-    if place.lat and place.lng:
-        maps_url = f"https://www.google.com/maps/search/?api=1&query={place.lat},{place.lng}"
+    maps_url = build_google_maps_url(place)
+    if maps_url:
         lines.append(f'   📍 <a href="{maps_url}">Open in Google Maps</a>')
 
     # Secret gem badge
@@ -65,23 +104,21 @@ def format_recommendation(place: Place, idx: int) -> str:
     if place.style_tags:
         lines.append(f"   🏷 Style: {', '.join(place.style_tags)}")
 
-    # Rating
-    if place.google_rating > 0:
-        review_text = f"({place.review_count} reviews)" if place.review_count else ""
-        lines.append(f"   ⭐ {place.google_rating} {review_text}")
-
-    # Opening hours + status
+    # Hours
     if place.opening_hours:
         status = get_open_status_label(place.opening_hours)
         lines.append(f"   🕐 {place.opening_hours} | {status}")
 
     # Distance
+    dist_bits = []
     if place.distance_walk_m:
         walk_min = max(1, int(place.distance_walk_m / 1000 * 12))
-        lines.append(f"   🚶 ~{walk_min} min walk ({place.distance_walk_m}m)")
+        dist_bits.append(f"🚶 ~{walk_min} min walk ({place.distance_walk_m}m)")
     if place.distance_drive_m:
         drive_min = max(1, int(place.distance_drive_m / 1000 * 2.4))
-        lines.append(f"   🚗 ~{drive_min} min drive ({place.distance_drive_m}m)")
+        dist_bits.append(f"🚗 ~{drive_min} min drive ({place.distance_drive_m}m)")
+    if dist_bits:
+        lines.append("   " + " · ".join(dist_bits))
 
     # Address
     if place.address:

@@ -127,6 +127,12 @@ def is_open_now(opening_hours: str) -> Optional[bool]:
     if not opening_hours or not opening_hours.strip():
         return None
 
+    raw = opening_hours.strip().lower()
+    if "temporarily closed" in raw or "permanently closed" in raw:
+        return False
+    if raw == "closed" or raw.startswith("closed "):
+        return False
+
     parsed = parse_opening_hours(opening_hours)
     if not parsed:
         return None

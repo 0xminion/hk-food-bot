@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Retry failed Google resolutions with periodic browser restarts to avoid crashes."""
+"""Batch 2: Resolve 500 more HK Island venues with periodic browser restarts."""
 import csv
 import json
+import os
 import re
 import sys
 import time
@@ -11,9 +12,9 @@ from urllib.parse import quote_plus
 
 sys.stdout.reconfigure(line_buffering=True)
 
-CACHE_FILE = Path(__file__).parent.parent / "data" / "google_ratings_cache.json"
-SELECTION_FILE = Path("/tmp/hk_island_500.csv")
-BATCH_SIZE = 200  # Restart browser after this many venues
+CACHE_FILE = Path(os.environ.get("CACHE_FILE_OVERRIDE", str(Path(__file__).parent.parent / "data" / "google_ratings_cache.json")))
+SELECTION_FILE = Path(os.environ.get("SELECTION_FILE_OVERRIDE", "/tmp/hk_island_500_batch2.csv"))
+BATCH_SIZE = int(os.environ.get("BATCH_SIZE_OVERRIDE", "200"))
 
 
 def load_cache() -> dict:
@@ -29,9 +30,7 @@ def save_cache(cache: dict):
 
 
 def accept_consent(page):
-    """Accept Google consent in multiple languages (English, German, French, etc.)."""
     try:
-        # Try common button texts across languages
         selectors = [
             "button:has-text('Accept all')",
             "button:has-text('Alle akzeptieren')",
@@ -39,7 +38,7 @@ def accept_consent(page):
             "button:has-text('Aceptar todo')",
             "button:has-text('Accept')",
             "button:has-text('I agree')",
-            "form[action*='consent'] button",  # Any button in consent form
+            "form[action*='consent'] button",
         ]
         for sel in selectors:
             try:
@@ -55,7 +54,6 @@ def accept_consent(page):
 
 
 def resolve_batch(to_resolve: list, cache: dict) -> tuple:
-    """Resolve a batch of venues. Returns (resolved, failed)."""
     from camoufox.sync_api import Camoufox
 
     resolved = 0
@@ -65,7 +63,6 @@ def resolve_batch(to_resolve: list, cache: dict) -> tuple:
     with Camoufox(headless=True) as browser:
         page = browser.new_page()
 
-        # Accept consent once
         page.goto("https://www.google.com/maps/@22.27,114.17,13z",
                   wait_until="domcontentloaded", timeout=20000)
         time.sleep(4)
@@ -107,7 +104,6 @@ def resolve_batch(to_resolve: list, cache: dict) -> tuple:
                 else:
                     failed += 1
 
-                # Progress every 25
                 done = i + 1
                 if done % 25 == 0:
                     save_cache(cache)
@@ -128,12 +124,12 @@ def resolve_batch(to_resolve: list, cache: dict) -> tuple:
 
 def main():
     cache = load_cache()
-    print(f"Cache loaded: {len(cache)} entries")
+    initial = len(cache)
+    print(f"Cache loaded: {initial} entries")
 
     with open(SELECTION_FILE) as f:
         venues = list(csv.DictReader(f))
 
-    # Find venues not yet cached
     to_resolve = []
     for v in venues:
         key = f"{v['name']}|{v['address']}"
@@ -148,7 +144,6 @@ def main():
     total_resolved = 0
     total_failed = 0
 
-    # Process in batches with browser restarts
     for batch_start in range(0, len(to_resolve), BATCH_SIZE):
         batch = to_resolve[batch_start:batch_start + BATCH_SIZE]
         batch_num = batch_start // BATCH_SIZE + 1
@@ -161,7 +156,8 @@ def main():
         total_failed += fail
         print(f"  Batch done: ✅{res} ❌{fail} | Total: ✅{total_resolved} ❌{total_failed}")
 
-    print(f"\nDone: {total_resolved} resolved, {total_failed} failed. Cache: {len(load_cache())} total")
+    final = len(load_cache())
+    print(f"\nDone: {total_resolved} resolved, {total_failed} failed. Cache: {initial} → {final} (+{final - initial})")
 
 
 if __name__ == "__main__":

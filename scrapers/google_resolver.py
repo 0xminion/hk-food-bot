@@ -25,6 +25,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote_plus
 from typing import Optional
 
 # Cache file location
@@ -126,7 +127,7 @@ def resolve_venue(name: str, address: str) -> Optional[dict]:
             _accept_consent(page)
 
             # Search for venue
-            url = f"https://www.google.com/maps/search/{query.replace(' ', '+')}"
+            url = f"https://www.google.com/maps/search/{quote_plus(query)}"
             page.goto(url, wait_until="domcontentloaded", timeout=15000)
             time.sleep(3)
 
@@ -262,7 +263,7 @@ def batch_resolve(csv_path: str, max_venues: int = 50, delay: float = 2.0):
         for i, v in enumerate(to_resolve):
             try:
                 query = f"{v['name']} {v['address']} Hong Kong"
-                url = f"https://www.google.com/maps/search/{query.replace(' ', '+')}"
+                url = f"https://www.google.com/maps/search/{quote_plus(query)}"
                 page.goto(url, wait_until="domcontentloaded", timeout=15000)
                 time.sleep(3)
 

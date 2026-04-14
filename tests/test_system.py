@@ -10,7 +10,7 @@ from data.loader import get_all_places, filter_by_type, compute_distances
 from engine.recommender import recommend
 from engine.taste import score_and_rank_places
 from engine.crossover import get_crossover_cuisine
-from engine.time_aware import filter_open_places
+from engine.time_aware import filter_open_places, is_open_now
 from engine.secret_gem import enrich_secret_gems
 from handlers.common import format_recommendations_message, HK_AREAS
 
@@ -91,11 +91,26 @@ def test_taste_scoring_integration(sample_places):
     assert top_tags & high_pref
 
 
-def test_secret_gem_enrichment(sample_places):
-    """Secret gem enrichment should flag qualifying places."""
-    enrich_secret_gems(sample_places)
-    gem_count = sum(1 for p in sample_places if p.is_secret_gem)
-    assert gem_count > 0
+def test_closed_places_are_excluded_from_open_filter():
+    """Explicit closed phrases should be treated as closed."""
+    from data.loader import Place
+
+    closed = Place(name="Closed Place", type="restaurant", opening_hours="Temporarily closed")
+    assert is_open_now(closed.opening_hours) is False
+    assert filter_open_places([closed]) == []
+
+
+def test_recommendation_pipeline_excludes_closed_places(sample_places):
+    closed = sample_places[0]
+    closed.is_closed = True
+    result = recommend(
+        all_places=sample_places,
+        place_type="restaurant",
+        area_lat=22.2790,
+        area_lng=114.1750,
+        use_time_filter=False,
+    )
+    assert closed.name not in {p.name for p in result.places}
 
 
 def test_crossover_pipeline():

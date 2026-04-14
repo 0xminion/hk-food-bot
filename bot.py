@@ -9,6 +9,7 @@ Requires bot token in config.yaml.
 """
 
 import logging
+import os
 from pathlib import Path
 
 import yaml
@@ -19,10 +20,26 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     ConversationHandler,
+    MessageHandler,
+    filters,
 )
 
-from handlers.eat import eat_entry, eat_location_chosen, eat_cuisine_chosen
-from handlers.drink import drink_entry, drink_location_chosen, drink_cuisine_chosen
+from handlers.eat import (
+    eat_entry,
+    eat_location_chosen,
+    eat_cuisine_chosen,
+    eat_other_cuisine_received,
+    eat_surprise_location_received,
+)
+from handlers.drink import (
+    drink_entry,
+    drink_location_chosen,
+    drink_cuisine_chosen,
+    drink_other_cuisine_received,
+    drink_surprise_location_received,
+)
+from engine.recommender import recommend
+from handlers.common import LOCATION, CUISINE, OTHER_INPUT, SURPRISE_LOCATION, format_recommendations_message
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -42,23 +59,100 @@ CONFIG_PATH = BOT_DIR / "config.yaml"
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
+
+def load_env_file(path: Path) -> None:
+    """Load a simple KEY=VALUE .env file without an extra dependency."""
+    if not path.exists():
+        return
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 def load_config() -> dict:
+    load_env_file(BOT_DIR / ".env")
     if not CONFIG_PATH.exists():
         logger.warning(f"Config file not found: {CONFIG_PATH}, using defaults")
         return {"telegram": {"token": ""}, "data": {"places_csv": "data/merged_places.csv"}}
     with open(CONFIG_PATH, encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+        cfg = yaml.safe_load(f) or {}
+    cfg.setdefault("telegram", {})
+    cfg.setdefault("data", {})
+    cfg["telegram"]["token"] = os.getenv("TELEGRAM_BOT_TOKEN", cfg["telegram"].get("token", ""))
+    cfg["telegram"]["user_id"] = os.getenv("TELEGRAM_USER_ID", cfg["telegram"].get("user_id", ""))
+    return cfg
+
 
 config = load_config()
 
 # ---------------------------------------------------------------------------
 # Conversation states (shared)
 # ---------------------------------------------------------------------------
-LOCATION, CUISINE = range(2)
+# Imported from handlers.common
 
 # ---------------------------------------------------------------------------
 # Handlers
 # ---------------------------------------------------------------------------
+async def handle_more_recommendations(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Expand the current recommendation search when the user taps More."""
+    query = update.callback_query
+    try:
+        await query.answer()
+    except Exception:
+        logger.warning("Failed to answer more callback query", exc_info=True)
+
+    flow = (query.data or "").split(":", 1)[-1]
+    state = context.user_data.get("last_recommendation") or {}
+    if not state or state.get("flow") != flow:
+        await query.edit_message_text("I lost the thread. Run /eat? or /drink? again.")
+        return ConversationHandler.END
+
+    current_excludes = set(context.user_data.get("exclude_place_names", []))
+    current_excludes.update(state.get("shown_place_names", []))
+
+    result = recommend(
+        all_places=context.user_data.get("all_places", []),
+        place_type=state.get("place_type", "restaurant"),
+        area_lat=state.get("lat", 22.2783),
+        area_lng=state.get("lng", 114.1747),
+        cuisine=state.get("cuisine"),
+        area_name=state.get("area_name"),
+        allow_expansion=True,
+        exclude_place_names=current_excludes,
+    )
+    new_shown_names = [p.name for p in result.places]
+    current_excludes.update(new_shown_names)
+    context.user_data["exclude_place_names"] = sorted(current_excludes)
+    context.user_data["last_recommendation"] = {
+        **state,
+        "expanded": True,
+        "shown_place_names": new_shown_names,
+    }
+
+    message = format_recommendations_message(
+        places=result.places,
+        area_name=state.get("area_name", "Unknown"),
+        place_type=state.get("place_type", "restaurant"),
+        crossover=result.crossover_suggestion,
+        expanded=result.expanded_search,
+    )
+    try:
+        await query.edit_message_text(
+            message,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+        )
+    except Exception:
+        logger.error("Failed to expand recommendations", exc_info=True)
+    return ConversationHandler.END
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /start command."""
     await update.message.reply_text(
@@ -109,6 +203,13 @@ def main() -> None:
             CUISINE: [
                 CallbackQueryHandler(eat_cuisine_chosen, pattern=r"^cuisine:"),
             ],
+            OTHER_INPUT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, eat_other_cuisine_received),
+            ],
+            SURPRISE_LOCATION: [
+                MessageHandler(filters.LOCATION, eat_surprise_location_received),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, eat_surprise_location_received),
+            ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         per_user=True,
@@ -125,6 +226,13 @@ def main() -> None:
             CUISINE: [
                 CallbackQueryHandler(drink_cuisine_chosen, pattern=r"^cuisine:"),
             ],
+            OTHER_INPUT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, drink_other_cuisine_received),
+            ],
+            SURPRISE_LOCATION: [
+                MessageHandler(filters.LOCATION, drink_surprise_location_received),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, drink_surprise_location_received),
+            ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         per_user=True,
@@ -132,6 +240,7 @@ def main() -> None:
     )
 
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(handle_more_recommendations, pattern=r"^more:"))
     app.add_handler(eat_handler)
     app.add_handler(drink_handler)
 

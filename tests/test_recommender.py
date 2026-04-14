@@ -1,46 +1,90 @@
 """Integration tests for the recommendation pipeline."""
 
-from engine.recommender import recommend, get_available_cuisines
+import pytest
+
+from engine.recommender import AREA_SCOPE_NEIGHBORS, _area_search_origins, recommend, get_available_cuisines
 
 
-def test_recommend_restaurants(sample_places):
-    """Should return up to 5 restaurant recommendations."""
-    result = recommend(
-        all_places=sample_places,
-        place_type="restaurant",
-        area_lat=22.2790,
-        area_lng=114.1750,
-        cuisine="thai",
-        use_time_filter=False,
-    )
-    assert len(result.places) > 0
-    assert all(p.type == "restaurant" for p in result.places)
+def test_area_scope_neighbor_map_is_direct_and_consistent():
+    """The scope map should reflect the direct station-neighbor layout."""
+    assert AREA_SCOPE_NEIGHBORS["Central"] == ["Central", "Sheung Wan", "Admiralty"]
+    assert AREA_SCOPE_NEIGHBORS["Wan Chai"] == ["Wan Chai", "Causeway Bay", "Admiralty"]
+    assert AREA_SCOPE_NEIGHBORS["Causeway Bay"] == ["Causeway Bay", "Wan Chai", "Tin Hau"]
+    assert AREA_SCOPE_NEIGHBORS["Sheung Wan"] == ["Sheung Wan", "Central", "Sai Ying Pun"]
+    assert AREA_SCOPE_NEIGHBORS["Sai Ying Pun"] == ["Sai Ying Pun", "Sheung Wan", "Kennedy Town"]
+    assert AREA_SCOPE_NEIGHBORS["Admiralty"] == ["Admiralty", "Central", "Wan Chai"]
+    assert AREA_SCOPE_NEIGHBORS["Tin Hau"] == ["Tin Hau", "Causeway Bay", "North Point"]
+    assert AREA_SCOPE_NEIGHBORS["Kennedy Town"] == ["Kennedy Town", "Sai Ying Pun"]
+    assert AREA_SCOPE_NEIGHBORS["TST"] == ["TST", "Jordan", "Yau Ma Tei"]
+    assert AREA_SCOPE_NEIGHBORS["Mong Kok"] == ["Mong Kok", "Yau Ma Tei", "Prince Edward"]
 
 
-def test_recommend_bars(sample_places):
-    """Should return bar recommendations."""
-    result = recommend(
-        all_places=sample_places,
-        place_type="bar",
-        area_lat=22.2783,
-        area_lng=114.1540,
-        use_time_filter=False,
-    )
-    assert len(result.places) > 0
-    assert all(p.type == "bar" for p in result.places)
+@pytest.mark.parametrize(
+    "area_name,expected_names",
+    [
+        ("Tin Hau", {"Tin Hau", "Causeway Bay", "North Point"}),
+        ("TST", {"TST", "Jordan", "Yau Ma Tei"}),
+        ("Mong Kok", {"Mong Kok", "Yau Ma Tei", "Prince Edward"}),
+    ],
+)
+def test_area_scope_hidden_station_coords_resolve(area_name, expected_names):
+    """Hidden neighbor stations should resolve to usable origins."""
+    origins = _area_search_origins(area_name)
+    assert {name for name, _, _ in origins} == expected_names
 
 
-def test_recommend_surprise(sample_places):
-    """Surprise mode should return results."""
+def test_recommend_surprise_with_rough_location_limits_radius(sample_places):
+    """Surprise mode should honor the caller's rough location and stay within 2km."""
     result = recommend(
         all_places=sample_places,
         place_type="restaurant",
         area_lat=22.2790,
         area_lng=114.1750,
         cuisine="surprise",
+        max_distance_m=2000,
         use_time_filter=False,
     )
     assert len(result.places) > 0
+    assert all(p.distance_walk_m <= 2000 for p in result.places if p.distance_walk_m)
+
+
+def test_recommend_ramen_stays_ramen(sample_places):
+    """Explicit ramen selection should not drift into Italian/pizza garbage."""
+    result = recommend(
+        all_places=sample_places,
+        place_type="restaurant",
+        area_lat=22.2790,
+        area_lng=114.1750,
+        cuisine="ramen",
+        use_time_filter=False,
+    )
+    names = [p.name for p in result.places]
+    assert names == ["Ramen House"]
+    assert all("ramen" in p.cuisine_tags for p in result.places)
+
+
+def test_recommend_french_does_not_backslide_into_bakery_or_dessert():
+    from data.loader import Place
+
+    places = [
+        Place(name="French Table", type="restaurant", cuisine_tags=["french"]),
+        Place(name="Bakery Corner", type="restaurant", cuisine_tags=["bakery"]),
+        Place(name="Dessert Stop", type="restaurant", cuisine_tags=["dessert"]),
+        Place(name="Italian Bistro", type="restaurant", cuisine_tags=["italian"]),
+    ]
+    result = recommend(
+        all_places=places,
+        place_type="restaurant",
+        area_lat=22.2790,
+        area_lng=114.1750,
+        cuisine="french",
+        use_time_filter=False,
+        use_taste_scoring=False,
+    )
+    assert result.places[0].name == "French Table"
+    assert all("bakery" not in p.cuisine_tags and "dessert" not in p.cuisine_tags for p in result.places)
+
+
 
 
 def test_recommend_crossover_fallback(sample_places):

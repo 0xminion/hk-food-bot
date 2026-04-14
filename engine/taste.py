@@ -24,6 +24,8 @@ USER_TASTE_PROFILE: dict[str, float] = {
     "hotpot": 0.55,
     # Crossover weights — cuisines similar to favorites
     "french": 0.6,
+    "bakery": 0.45,
+    "dessert": 0.4,
     "vietnamese": 0.55,
     "korean": 0.5,
     "fusion": 0.5,

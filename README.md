@@ -35,24 +35,52 @@ The bot is pre-loaded with your taste profile from your Google Maps "minion abc"
 
 ### 1. Get a Telegram Bot Token
 
-Talk to [@BotFather](https://t.me/BotFather) on Telegram. Create a new bot and copy the API token.
+Talk to @BotFather on Telegram. Create a new bot and copy the API token.
 
-### 2. Configure
+### 2. Create your local secrets file
 
-Edit `config.yaml` and replace `YOUR_BOT_TOKEN_HERE` with your actual token:
+Create a file named `.env` in the repo root:
+
+```bash
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+TELEGRAM_USER_ID=315164592
+```
+
+Important:
+- `.env` is for secrets only
+- do not commit it
+- this repo already ignores `.env`
+
+### 3. Configure bot behavior
+
+Edit `config.yaml` for non-secret settings only:
 
 ```yaml
 telegram:
-  token: "123456:ABC-DEF..."
+  parse_mode: "HTML"
+
+data:
+  places_csv: "data/merged_places.csv"
+
+defaults:
+  search_radius_m: 5000
+  num_recommendations: 5
+  num_cuisine_suggestions: 5
+
+time_filter:
+  enabled: true
+  timezone: "Asia/Hong_Kong"
 ```
 
-### 3. Install Dependencies
+The bot loads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_USER_ID` from `.env`, then falls back to `config.yaml` if needed.
+
+### 4. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Run
+### 5. Run
 
 ```bash
 python bot.py
@@ -60,7 +88,7 @@ python bot.py
 
 You should see `Starting HK Food Bot...` in the terminal.
 
-### 5. Test
+### 6. Test
 
 Open your bot in Telegram and send `/start`, then try `/eat?` or `/drink?`.
 
