@@ -7,6 +7,7 @@ secret gem detection, and distance calculation into a unified pipeline.
 
 import logging
 import random
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -69,6 +70,11 @@ class RecommendationResult:
     places: list[Place] = field(default_factory=list)
     crossover_suggestion: str = ""
     expanded_search: bool = False
+
+
+def _normalize_name(name: str) -> str:
+    """Normalize place name for franchise dedup — strip (Location) suffixes like '(Wan Chai)'."""
+    return re.sub(r'\s*\([^)]*\)\s*$', '', name).strip().lower()
 
 
 def _resolve_area_coord(area_name: str) -> tuple[float, float] | None:
@@ -280,7 +286,7 @@ def recommend(
     if candidates:
         seen: dict[str, Place] = {}
         for p in candidates:
-            key = p.name.lower()
+            key = _normalize_name(p.name)
             if key not in seen:
                 seen[key] = p
             else:
@@ -289,7 +295,7 @@ def recommend(
                 if (p.distance_walk_m or 99999) < (existing.distance_walk_m or 99999):
                     seen[key] = p
         candidates = list(seen.values())
-        logger.info(f"Step 6.5 - Franchise dedup: {len(candidates)} unique names")
+        logger.info(f"Step 7 - Franchise dedup: {len(candidates)} unique names")
 
     # Step 8: Score and rank
     if not candidates:

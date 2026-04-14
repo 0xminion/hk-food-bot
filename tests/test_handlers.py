@@ -118,7 +118,7 @@ def test_handle_more_recommendations_expands_search(monkeypatch):
     mock_recommend.assert_called_once()
     kwargs = mock_recommend.call_args.kwargs
     assert kwargs["allow_expansion"] is True
-    query.edit_message_text.assert_awaited()
+    query.message.reply_text.assert_awaited()
 
 
 def test_format_recommendation_with_booking():

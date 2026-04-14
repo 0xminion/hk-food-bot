@@ -101,6 +101,8 @@ config = load_config()
 # ---------------------------------------------------------------------------
 async def handle_more_recommendations(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Expand the current recommendation search when the user taps More."""
+    from handlers.common import build_more_button_keyboard
+
     query = update.callback_query
     try:
         await query.answer()
@@ -129,10 +131,17 @@ async def handle_more_recommendations(update: Update, context: ContextTypes.DEFA
     new_shown_names = [p.name for p in result.places]
     current_excludes.update(new_shown_names)
     context.user_data["exclude_place_names"] = sorted(current_excludes)
+
+    # Cumulative count: all previously shown + current batch
+    all_previously_shown = state.get("all_shown_place_names", state.get("shown_place_names", []))
+    cumulative_shown = all_previously_shown + new_shown_names
+    start_idx = len(all_previously_shown) + 1
+
     context.user_data["last_recommendation"] = {
         **state,
         "expanded": True,
         "shown_place_names": new_shown_names,
+        "all_shown_place_names": cumulative_shown,
     }
 
     message = format_recommendations_message(
@@ -141,24 +150,19 @@ async def handle_more_recommendations(update: Update, context: ContextTypes.DEFA
         place_type=state.get("place_type", "restaurant"),
         crossover=result.crossover_suggestion,
         expanded=result.expanded_search,
+        start_idx=start_idx,
     )
-    # Number the appended results continuing from previous count
-    prev_count = len(state.get("shown_place_names", []))
-    if prev_count > 0:
-        message = format_recommendations_message(
-            places=result.places,
-            area_name=state.get("area_name", "Unknown"),
-            place_type=state.get("place_type", "restaurant"),
-            crossover=result.crossover_suggestion,
-            expanded=result.expanded_search,
-            start_idx=prev_count + 1,
-        )
-        message = f"─── More results ───\n\n{message}"
+    message = f"─── More results ───\n\n{message}"
+
+    # Keep "More" button unless search was fully expanded
+    markup = None if result.expanded_search else build_more_button_keyboard(flow)
+
     try:
         await query.message.reply_text(
             message,
             parse_mode="HTML",
             disable_web_page_preview=True,
+            reply_markup=markup,
         )
     except Exception:
         logger.error("Failed to expand recommendations", exc_info=True)
