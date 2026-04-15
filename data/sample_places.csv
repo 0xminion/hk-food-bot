@@ -1,16 +1,16 @@
-name,type,cuisine_tags,style_tags,address,lat,lng,google_rating,review_count,google_place_id,booking_url,booking_platform,opening_hours,source_url,is_secret_gem,last_updated,distance_walk_m,distance_drive_m
-Bo Innovation,restaurant,"chinese,fusion","fine-dining",Shop A, UG/F, Block 8, Ship Street, Wan Chai,22.2784,114.1735,4.5,1200,ChIJ1,https://www.chope.com.hk/bo-innovation,chope,Mo-Sa 12:00-14:30,18:30-22:30,https://www.michelin.com,0,2026-04-01,0,0
-Ozone Bar,bar,"cocktail-bar","rooftop-bar",118/F, ICC, 1 Austin Road West, TST,22.3038,114.1578,4.3,2800,ChIJ2,,null,Daily 17:00-01:00,https://www.timeout.com/hong-kong,0,2026-04-01,0,0
-Yat Lok,restaurant,"chinese","casual",34-38 Stanley Street, Central,22.2804,114.1556,4.6,950,ChIJ3,,null,Mon-Sun 10:00-22:00,https://guide.michelin.com,0,2026-04-01,0,0
-The Old Man,bar,"cocktail-bar","speakeasy","G/F, 16 Aberdeen Street, SoHo, Central",22.2840,114.1536,4.7,600,ChIJ4,,null,Mon-Sat 17:00-02:00,https://www.timeout.com/hong-kong,1,2026-04-01,0,0
-Ichiran,restaurant,"japanese,noodles","casual","G/F, 64 Mody Road, TST",22.2982,114.1748,4.4,3200,ChIJ5,,null,Daily 11:00-23:00,,0,2026-04-01,0,0
-Carbone,restaurant,"italian","fine-dining",LGF-1, Wellington Street, Central,22.2810,114.1550,4.6,800,ChIJ6,https://www.chope.com.hk/carbone-hong-kong,chope,Mon-Sun 17:30-23:00,https://guide.michelin.com,0,2026-04-01,0,0
-Padre,bar,"cocktail-bar","speakeasy","G/F, 52 Wyndham Street, Central",22.2817,114.1560,4.5,450,ChIJ7,,null,Mon-Sat 18:00-02:00,https://www.timeout.com/hong-kong,1,2026-04-01,0,0
-Yardbird,restaurant,"japanese","casual",36 Graham Street, Central,22.2830,114.1548,4.5,1800,ChIJ8,,null,Tue-Sun 18:00-00:00,https://www.eater.com,0,2026-04-01,0,0
-Penicillin,bar,"cocktail-bar","dive-bar","Lower Ground, 23 Hollywood Road, Central",22.2856,114.1530,4.6,350,ChIJ9,,null,Mon-Sat 17:00-01:00,https://guide.michelin.com,1,2026-04-01,0,0
-Nha Trang,restaurant,"vietnamese","casual",74 Wellington Street, Central,22.2808,114.1553,4.2,600,ChIJ10,,null,Mon-Sun 11:00-22:00,,0,2026-04-01,0,0
-Aqua,restaurant,"italian,seafood","fine-dining","1 Peking Road, TST",22.2952,114.1688,4.3,1500,ChIJ11,https://www.opentable.com.hk/aqua,hk,opentable,Daily 12:00-23:00,https://www.timeout.com/hong-kong,0,2026-04-01,0,0
-Dragonfly,bar,"wine-bar","lounge","23 Chatham Road, TST",22.2990,114.1722,4.4,280,ChIJ12,,null,Mon-Sun 16:00-01:00,,1,2026-04-01,0,0
-Joy Hing,restaurant,"chinese,bbq","street-food","266-268 Hennessy Road, Wan Chai",22.2775,114.1760,4.5,200,ChIJ13,,null,Mon-Sat 10:00-20:00,,1,2026-04-01,0,0
-Hutong,restaurant,"chinese","rooftop","28/F, One Peking, TST",22.2955,114.1690,4.4,2200,ChIJ14,https://www.chope.com.hk/hutong,chope,Daily 12:00-15:00,18:00-23:00,,0,2026-04-01,0,0
-Craft Brew & Co,bar,"craft-beer","pub","9 Wing Fung Street, Wan Chai",22.2790,114.1750,4.1,150,ChIJ15,,null,Mon-Sun 15:00-00:00,,1,2026-04-01,0,0
+"name","type","cuisine_tags","style_tags","address","lat","lng","google_rating","review_count","google_place_id","booking_url","booking_platform","opening_hours","source_url","is_secret_gem","last_updated","distance_walk_m","distance_drive_m"
+"Bo Innovation","restaurant","""chinese","fusion""","""fine-dining"",Shop A, UG/F, Block 8, Ship Street, Wan Chai","22.2784","114.1735","4.5","1200","ChIJ1","https://www.chope.com.hk/bo-innovation","chope","Mo-Sa 12:00-14:30","18:30-22:30","https://www.michelin.com","0","2026-04-01","0"
+"Ozone Bar","bar","""cocktail-bar""","""rooftop-bar""","118/F, ICC, 1 Austin Road West, TST","22.3038","114.1578","4.3","2800","ChIJ2","","null","Daily 17:00-01:00","https://www.timeout.com/hong-kong","0","2026-04-01","0","0"
+"Yat Lok","restaurant","""chinese""","""casual""","34-38 Stanley Street, Central","22.2804","114.1556","4.6","950","ChIJ3","","null","Mon-Sun 10:00-22:00","https://guide.michelin.com","0","2026-04-01","0","0"
+"The Old Man","bar","""cocktail-bar""","""speakeasy""","""G/F, 16 Aberdeen Street, SoHo, Central""","22.2840","114.1536","4.7","600","ChIJ4","","null","Mon-Sat 17:00-02:00","https://www.timeout.com/hong-kong","1","2026-04-01","0","0"
+"Ichiran","restaurant","""japanese","noodles""","""casual"",""G/F, 64 Mody Road, TST""","22.2982","114.1748","4.4","3200","ChIJ5","","null","Daily 11:00-23:00","","0","2026-04-01","0","0"
+"Carbone","restaurant","""italian""","""fine-dining""","LGF-1, Wellington Street, Central","22.2810","114.1550","4.6","800","ChIJ6","https://www.chope.com.hk/carbone-hong-kong","chope","Mon-Sun 17:30-23:00","https://guide.michelin.com","0","2026-04-01","0","0"
+"Padre","bar","""cocktail-bar""","""speakeasy""","""G/F, 52 Wyndham Street, Central""","22.2817","114.1560","4.5","450","ChIJ7","","null","Mon-Sat 18:00-02:00","https://www.timeout.com/hong-kong","1","2026-04-01","0","0"
+"Yardbird","restaurant","""japanese""","""casual""","36 Graham Street, Central","22.2830","114.1548","4.5","1800","ChIJ8","","null","Tue-Sun 18:00-00:00","https://www.eater.com","0","2026-04-01","0","0"
+"Penicillin","bar","""cocktail-bar""","""dive-bar""","""Lower Ground, 23 Hollywood Road, Central""","22.2856","114.1530","4.6","350","ChIJ9","","null","Mon-Sat 17:00-01:00","https://guide.michelin.com","1","2026-04-01","0","0"
+"Nha Trang","restaurant","""vietnamese""","""casual""","74 Wellington Street, Central","22.2808","114.1553","4.2","600","ChIJ10","","null","Mon-Sun 11:00-22:00","","0","2026-04-01","0","0"
+"Aqua","restaurant","""italian","seafood""","""fine-dining"",""1 Peking Road, TST""","22.2952","114.1688","4.3","1500","ChIJ11","https://www.opentable.com.hk/aqua","hk","opentable","Daily 12:00-23:00","https://www.timeout.com/hong-kong","0","2026-04-01","0"
+"Dragonfly","bar","""wine-bar""","""lounge""","""23 Chatham Road, TST""","22.2990","114.1722","4.4","280","ChIJ12","","null","Mon-Sun 16:00-01:00","","1","2026-04-01","0","0"
+"Joy Hing","restaurant","""chinese","bbq""","""street-food"",""266-268 Hennessy Road, Wan Chai""","22.2775","114.1760","4.5","200","ChIJ13","","null","Mon-Sat 10:00-20:00","","1","2026-04-01","0","0"
+"Hutong","restaurant","""chinese""","""rooftop""","""28/F, One Peking, TST""","22.2955","114.1690","4.4","2200","ChIJ14","https://www.chope.com.hk/hutong","chope","Daily 12:00-15:00","18:00-23:00","","0","2026-04-01","0"
+"Craft Brew & Co","bar","""craft-beer""","""pub""","""9 Wing Fung Street, Wan Chai""","22.2790","114.1750","4.1","150","ChIJ15","","null","Mon-Sun 15:00-00:00","","1","2026-04-01","0","0"

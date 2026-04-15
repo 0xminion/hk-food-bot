@@ -41,13 +41,18 @@ with Camoufox(headless=True) as browser:
               wait_until="domcontentloaded", timeout=20000)
     time.sleep(3)
     try:
+        # Accept cookies — try multiple languages
         btns = page.locator("button")
         for i in range(btns.count()):
-            t = btns.nth(i).inner_text().lower()
-            if "accept" in t or "i agree" in t:
-                btns.nth(i).click()
-                time.sleep(2)
-                break
+            try:
+                t = btns.nth(i).inner_text().lower().strip()
+                if any(kw in t for kw in ["accept", "agree", "akzeptieren", "zustimmen",
+                                           "alle akzeptieren", "i agree", "consent", "ok"]):
+                    btns.nth(i).click()
+                    time.sleep(2)
+                    break
+            except Exception:
+                continue
     except Exception:
         pass
 
@@ -74,7 +79,25 @@ with Camoufox(headless=True) as browser:
                 else:
                     failed += 1
             else:
-                failed += 1
+                # Fallback: try aria-label pattern (e.g. "4.5 stars 1,234 reviews")
+                aria = page.inner_text("body")
+                m2 = re.search(r"(\d[.,]\d)\s*(?:stars?|Stern)", aria, re.IGNORECASE)
+                m3 = re.search(r"(\d[\d.,]*)\s*(?:review|Bewertung)", aria, re.IGNORECASE)
+                if m2:
+                    rating = float(m2.group(1).replace(",", "."))
+                    reviews = int(m3.group(1).replace(",", "").replace(".", "")) if m3 else 0
+                    if 1.0 <= rating <= 5.0:
+                        cache[v["key"]] = {
+                            "google_rating": rating,
+                            "google_reviews": reviews,
+                            "resolved": True,
+                            "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                        }
+                        resolved += 1
+                    else:
+                        failed += 1
+                else:
+                    failed += 1
 
             if (i + 1) % 20 == 0:
                 with open(CACHE_FILE, "w") as f:
