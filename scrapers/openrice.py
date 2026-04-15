@@ -514,7 +514,6 @@ def scrape(
 
     # Load existing data for resumption
     seen_names, all_venues = _load_existing_ids(output_path)
-    seen_poi_ids: set[int] = set()
 
     if cuisine_ids is None:
         # First: scrape default listing (no cuisine filter)
@@ -548,20 +547,30 @@ def scrape(
 
             empty_streak = 0
             new_count = 0
+            updated_count = 0
 
             for r in results:
-                poi_id = r.get("poiId")
-                if poi_id and poi_id not in seen_poi_ids:
-                    seen_poi_ids.add(poi_id)
-                    venue = parse_venue(r)
-                    if venue:
-                        name_key = f"{venue['name'].strip()}|{venue['address'].strip()}"
-                        if name_key not in seen_names:
-                            seen_names.add(name_key)
-                            all_venues.append(venue)
-                            new_count += 1
+                venue = parse_venue(r)
+                if not venue:
+                    continue
+                name_key = f"{venue['name'].strip()}|{venue['address'].strip()}"
+                if name_key not in seen_names:
+                    seen_names.add(name_key)
+                    all_venues.append(venue)
+                    new_count += 1
+                else:
+                    # Update existing venue with new fields
+                    for existing in all_venues:
+                        ekey = f"{existing['name'].strip()}|{existing['address'].strip()}"
+                        if ekey == name_key:
+                            for field in ("address_en", "district", "or_score", "bookmark_count",
+                                          "price_range", "is_open_now", "popular_dishes", "award_status"):
+                                if venue.get(field) and not existing.get(field):
+                                    existing[field] = venue[field]
+                                    updated_count += 1
+                            break
 
-            log.info(f"  Page {page}: {len(results)} results, {new_count} new. Total: {len(all_venues)}")
+            log.info(f"  Page {page}: {len(results)} results, {new_count} new, {updated_count} updated. Total: {len(all_venues)}")
 
             page += 1
             time.sleep(delay)
