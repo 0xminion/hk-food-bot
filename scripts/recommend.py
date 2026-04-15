@@ -145,6 +145,18 @@ def format_place(p, index: int) -> dict:
         "is_secret_gem": p.is_secret_gem,
     }
 
+    if p.address_en:
+        result["address_en"] = p.address_en
+    if p.district:
+        result["district"] = p.district
+    if p.price_range:
+        result["price_range"] = p.price_range
+    if p.popular_dishes:
+        result["popular_dishes"] = p.popular_dishes
+    if p.bookmark_count:
+        result["bookmark_count"] = p.bookmark_count
+    if p.award_status:
+        result["award_status"] = p.award_status
     if p.distance_walk_m:
         result["distance_m"] = p.distance_walk_m
     if p.distance_drive_m:

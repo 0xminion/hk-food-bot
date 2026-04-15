@@ -18,15 +18,23 @@ class Place:
     cuisine_tags: list[str] = field(default_factory=list)
     style_tags: list[str] = field(default_factory=list)
     address: str = ""
+    address_en: str = ""
     lat: float = 0.0
     lng: float = 0.0
+    district: str = ""
     google_rating: float = 0.0
     or_rating: float = 0.0
+    or_score: float = 0.0
     review_count: int = 0
+    bookmark_count: int = 0
+    price_range: str = ""
     google_place_id: str = ""
     booking_url: str = ""
     booking_platform: str = ""
     opening_hours: str = ""
+    is_open_now: bool = False
+    popular_dishes: list[str] = field(default_factory=list)
+    award_status: int = 0
     source_url: str = ""
     is_secret_gem: bool = False
     is_closed: bool = False
@@ -158,21 +166,38 @@ def load_places(csv_path: str | Path) -> list[Place]:
                     google_rating = max(0.0, min(5.0, float(cached["google_rating"])))
                     review_count = max(review_count, int(cached.get("google_reviews", 0)))
 
+                # Parse popular_dishes
+                raw_dishes = row.get("popular_dishes") or "[]"
+                try:
+                    dishes = json.loads(raw_dishes)
+                    if not isinstance(dishes, list):
+                        dishes = []
+                except (json.JSONDecodeError, TypeError):
+                    dishes = []
+
                 places.append(Place(
                     name=name,
                     type=raw_type,
                     cuisine_tags=_parse_tags(row.get("cuisine_tags") or ""),
                     style_tags=_parse_tags(row.get("style_tags") or ""),
-                    address=(row.get("address") or "").strip(),
+                    address=address,
+                    address_en=(row.get("address_en") or "").strip(),
                     lat=lat,
                     lng=lng,
+                    district=(row.get("district") or "").strip(),
                     google_rating=google_rating,
                     or_rating=or_rating,
+                    or_score=max(0.0, min(1.0, _safe_float(row.get("or_score")))),
                     review_count=review_count,
+                    bookmark_count=max(0, _safe_int(row.get("bookmark_count"))),
+                    price_range=(row.get("price_range") or "").strip(),
                     google_place_id=(row.get("google_place_id") or "").strip(),
                     booking_url=(row.get("booking_url") or "").strip(),
                     booking_platform=(row.get("booking_platform") or "").strip(),
                     opening_hours=(row.get("opening_hours") or "").strip(),
+                    is_open_now=(row.get("is_open_now") or "").lower() == "true",
+                    popular_dishes=dishes,
+                    award_status=_safe_int(row.get("award_status")),
                     source_url=(row.get("source_url") or "").strip(),
                     is_secret_gem=(row.get("is_secret_gem") or "false").lower() in ("1", "true"),
                     is_closed=_parse_closed_status(row.get("status") or "", row.get("opening_hours") or "", row.get("source_url") or ""),

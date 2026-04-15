@@ -287,6 +287,7 @@ def classify_venue(categories: list) -> tuple[str, list[str], list[str]]:
         "雲南菜": "yunnan",
         "星馬菜": "malaysian",
         "fusion": "fusion",
+        "蒙古菜": "mongolian",
         # OpenRice shorthand (XX式, XX-YY)
         "西式": "western",
         "港式": "hk-style",
@@ -433,15 +434,26 @@ def parse_venue(r: dict) -> Optional[dict]:
         "cuisine_tags": json.dumps(cuisine_tags, ensure_ascii=False),
         "style_tags": json.dumps(style_tags, ensure_ascii=False),
         "address": r.get("address", ""),
+        "address_en": r.get("addressOtherLang", ""),
         "lat": r.get("mapLatitude", ""),
         "lng": r.get("mapLongitude", ""),
+        "district": (r.get("district") or {}).get("name", ""),
         "google_rating": "",  # OpenRice rating, not Google
         "or_rating": r.get("scoreOverall", ""),  # Keep OpenRice rating separately
+        "or_score": r.get("orScore", ""),
         "review_count": r.get("reviewCount", 0),
+        "bookmark_count": r.get("bookmarkedUserCount", 0),
+        "price_range": (r.get("priceUI") or "").strip(),
         "google_place_id": "",  # Not available from OpenRice
         "booking_url": booking_url,
         "booking_platform": booking_platform,
         "opening_hours": opening_hours,
+        "is_open_now": str(r.get("openNow", False)),
+        "popular_dishes": json.dumps(
+            [t.get("name", "") for t in r.get("tags", []) if t.get("name")],
+            ensure_ascii=False,
+        ),
+        "award_status": str(r.get("awardStatus", 0)),
         "source_url": source_url,
         "is_secret_gem": "false",
         "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
@@ -451,10 +463,12 @@ def parse_venue(r: dict) -> Optional[dict]:
 # ── Main Scraper ───────────────────────────────────────────────────────────────
 
 CSV_COLUMNS = [
-    "name", "type", "cuisine_tags", "style_tags", "address", "lat", "lng",
-    "google_rating", "or_rating", "review_count", "google_place_id",
-    "booking_url", "booking_platform", "opening_hours", "source_url",
-    "is_secret_gem", "last_updated",
+    "name", "type", "cuisine_tags", "style_tags", "address", "address_en",
+    "lat", "lng", "district", "google_rating", "or_rating", "or_score",
+    "review_count", "bookmark_count", "price_range", "google_place_id",
+    "booking_url", "booking_platform", "opening_hours", "is_open_now",
+    "popular_dishes", "award_status", "source_url", "is_secret_gem",
+    "last_updated",
 ]
 
 

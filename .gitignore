@@ -9,3 +9,7 @@ build/
 venv/
 *.log
 .DS_Store
+data/_cache_*.json
+data/_resolve_*.csv
+data/_uncached_*.csv
+data/*.bak*
