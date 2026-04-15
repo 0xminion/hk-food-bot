@@ -174,6 +174,7 @@ def recommend(
     max_distance_m: int = 25000,
     allow_expansion: bool = False,
     exclude_place_names: set[str] | None = None,
+    skip_personal_exclusions: bool = False,
 ) -> RecommendationResult:
     """
     Main recommendation pipeline.
@@ -220,13 +221,16 @@ def recommend(
         logger.info(f"Step 1c - Closed filter: {before - len(filtered)} places removed")
 
     # Exclude personal "minion abc" list
-    if _loaded_personal:
+    if _loaded_personal and not skip_personal_exclusions:
         before = len(filtered)
         filtered = [p for p in filtered if p.name.lower() not in _loaded_personal]
         logger.info(f"Step 1d - Personal exclusion: {before - len(filtered)} places removed")
 
     # Step 2/3: Filter by proximity
     scope_radius = 1500 if area_name and area_name in AREA_SCOPE_NEIGHBORS else max_distance_m
+    # For bars/drink, expand scope since cocktail bars etc. are sparse
+    if place_type == "bar" and scope_radius < 5000:
+        scope_radius = 5000
     nearby = _filter_nearby_places(filtered, area_name, area_lat, area_lng, scope_radius)
     logger.info(f"Step 3 - Proximity filter: {len(nearby)} places")
 
@@ -252,7 +256,7 @@ def recommend(
             # Smart fallback: try SIMILAR cuisines first (same family)
             similar = get_similar_cuisines(cuisine, top_n=3)
             for sim_cuisine, _ in similar:
-                sim_matched = filter_by_cuisine(nearby, [sim_cuisine])
+                sim_matched = filter_by_any_tag(nearby, [sim_cuisine]) if place_type == "bar" else filter_by_cuisine(nearby, [sim_cuisine])
                 if sim_matched:
                     matched = sim_matched
                     result.crossover_suggestion = sim_cuisine
@@ -264,7 +268,7 @@ def recommend(
             all_cuisines = list({tag for p in nearby for tag in p.cuisine_tags})
             crossover = get_crossover_cuisine([cuisine], set(all_cuisines))
             if crossover:
-                matched = filter_by_cuisine(nearby, [crossover])
+                matched = filter_by_any_tag(nearby, [crossover]) if place_type == "bar" else filter_by_cuisine(nearby, [crossover])
                 result.crossover_suggestion = crossover
                 logger.info(f"  Crossover fallback ({crossover}): {len(matched)} places")
 
@@ -280,7 +284,7 @@ def recommend(
             for sim_cuisine, _ in similar:
                 if len(matched) >= num_results:
                     break
-                sim_matches = [p for p in filter_by_cuisine(nearby, [sim_cuisine]) if p.name not in matched_names]
+                sim_matches = [p for p in (filter_by_any_tag(nearby, [sim_cuisine]) if place_type == "bar" else filter_by_cuisine(nearby, [sim_cuisine])) if p.name not in matched_names]
                 if sim_matches:
                     matched.extend(sim_matches[:num_results - len(matched)])
                     matched_names.update(p.name for p in sim_matches)
