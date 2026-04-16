@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Batch cache Google ratings for a specific area CSV."""
-import csv, json, re, sys, time
+import csv, json, os, re, sys, time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote_plus
 
 AREA_CSV = sys.argv[1] if len(sys.argv) > 1 else "data/_uncached_hk_island.csv"
-CACHE_FILE = Path("data/google_ratings_cache.json")
+CACHE_FILE = Path(os.environ.get("CACHE_FILE_OVERRIDE", "data/google_ratings_cache.json"))
 
 # Load existing cache
 cache = {}

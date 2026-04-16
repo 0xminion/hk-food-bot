@@ -161,8 +161,15 @@ def load_places(csv_path: str | Path) -> list[Place]:
                 # Enrich with Google ratings from cache
                 address = (row.get("address") or "").strip()
                 cache_key = f"{name}|{address}"
-                cached = google_cache.get(cache_key, {})
-                if cached.get("google_rating") and not google_rating:
+                cached = google_cache.get(cache_key)
+                if not cached:
+                    # Fallback: name-only match
+                    name_lower = name.lower()
+                    for ck, cv in google_cache.items():
+                        if ck.split("|")[0].strip().lower() == name_lower:
+                            cached = cv
+                            break
+                if cached and cached.get("google_rating") and not google_rating:
                     google_rating = max(0.0, min(5.0, float(cached["google_rating"])))
                     review_count = max(review_count, int(cached.get("google_reviews", 0)))
 

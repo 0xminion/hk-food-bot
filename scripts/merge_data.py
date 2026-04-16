@@ -45,11 +45,34 @@ def make_key(name: str, address: str) -> str:
     return f"{name.strip().lower()}|{address.strip().lower()}"
 
 
+def _sanitize_bool_field(value: str) -> str:
+    """Sanitize boolean field — reject URLs and non-boolean values."""
+    if not value:
+        return "false"
+    v = str(value).strip().lower()
+    if v in ("1", "true"):
+        return "true"
+    if v in ("0", "false", ""):
+        return "false"
+    # Reject anything that looks like a URL or other garbage
+    if v.startswith("http") or "/" in v or "." in v:
+        return "false"
+    return "false"
+
+
 def enrich_google_rating(row: dict, cache: dict) -> dict:
-    """Enrich row with Google ratings from cache if not already present."""
+    """Enrich row with Google ratings from cache if not already present.
+    Tries exact name|addr match first, falls back to name-only match."""
     cache_key = f"{row['name'].strip()}|{row.get('address', '').strip()}"
-    cached = cache.get(cache_key, {})
-    if cached.get("google_rating") and not row.get("google_rating"):
+    cached = cache.get(cache_key)
+    if not cached:
+        # Fallback: name-only match (scan cache for matching name)
+        name_lower = row['name'].strip().lower()
+        for ck, cv in cache.items():
+            if ck.split("|")[0].strip().lower() == name_lower:
+                cached = cv
+                break
+    if cached and cached.get("google_rating") and not row.get("google_rating"):
         row["google_rating"] = cached["google_rating"]
         row["review_count"] = max(
             int(row.get("review_count", 0) or 0),
@@ -63,11 +86,32 @@ def normalize_tags(raw: str) -> str:
     if not raw:
         return "[]"
     raw = raw.strip()
-    # Already JSON
+    # Already JSON — parse and re-serialize to fix any format issues
     if raw.startswith("["):
-        return raw
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                # Clean: strip backslash-escaped quotes, lowercase, deduplicate
+                clean = []
+                seen = set()
+                for t in parsed:
+                    if not isinstance(t, str):
+                        continue
+                    t = t.strip().strip("\\\"").strip("\"").strip("'").lower()
+                    if t and t not in seen:
+                        seen.add(t)
+                        clean.append(t)
+                return json.dumps(clean, ensure_ascii=False)
+        except (json.JSONDecodeError, TypeError):
+            pass
     # Comma-separated
-    tags = [t.strip().lower() for t in raw.split(",") if t.strip()]
+    tags = []
+    seen = set()
+    for t in raw.split(","):
+        t = t.strip().strip("\\\"").strip("\"").strip("'").lower()
+        if t and t not in seen:
+            seen.add(t)
+            tags.append(t)
     return json.dumps(tags, ensure_ascii=False)
 
 
@@ -115,7 +159,7 @@ def main():
                 "popular_dishes": row.get("popular_dishes", "[]"),
                 "award_status": row.get("award_status", "0"),
                 "source_url": row.get("source_url", ""),
-                "is_secret_gem": row.get("is_secret_gem", "false"),
+                "is_secret_gem": _sanitize_bool_field(row.get("is_secret_gem", "false")),
                 "last_updated": row.get("last_updated", ""),
                 "source": "openrice",
             }
@@ -170,7 +214,7 @@ def main():
                 "popular_dishes": row.get("popular_dishes", "[]"),
                 "award_status": row.get("award_status", "0"),
                 "source_url": row.get("source_url", ""),
-                "is_secret_gem": row.get("is_secret_gem", "false"),
+                "is_secret_gem": _sanitize_bool_field(row.get("is_secret_gem", "false")),
                 "last_updated": row.get("last_updated", ""),
                 "source": "google_maps",
             }
