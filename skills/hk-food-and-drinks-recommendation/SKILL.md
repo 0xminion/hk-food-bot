@@ -18,14 +18,14 @@ Use this format whenever giving restaurant or bar recommendations for Hong Kong.
 {Optional note about data availability}
 
 1. {Name} ⭐ {OR_rating} (OR) · ⭐ {Google_rating} (Google, {review_count} reviews)
-   📍 Open in Google Maps
+   [📍 Open in Google Maps]({maps_url})
    {💎 Secret gem!}
    {⭐⭐⭐ Michelin / 🏆 Asia's 50 Best}
    🍜 Cuisine: {comma-separated tags}
    {🟢 Open now / 🔴 Closed / ⏰ {hours}}
    🚶 ~{walk_min} min walk ({walk_m}m) · 🚗 ~{drive_min} min drive ({drive_m}m)
    📫 {full address}
-   {🎟 Book here / 🎟 Walk-in, no booking needed}
+   {[🎟 Book here]({booking_url}) / 🎟 Walk-in, no booking needed}
    {💵 {$ | $$ | $$$ | $$$$}}
 
 2. ...
@@ -71,7 +71,7 @@ Want me to try a specific {cuisine/drink type} — {suggestion1}, {suggestion2},
 - Show if available: `💵 {$ | $$ | $$$ | $$$$}` or `💵 {OpenRice price text}`
 
 ### Booking
-- If booking_url exists: `🎟 Book here` (as clickable link)
+- If booking_url exists: `[🎟 Book here]({booking_url})` (markdown link)
 - If no booking: `🎟 Walk-in, no booking needed`
 
 ### Address
@@ -79,9 +79,9 @@ Want me to try a specific {cuisine/drink type} — {suggestion1}, {suggestion2},
 - Include Chinese characters as-is
 
 ### Google Maps Link
-- Always show: `📍 Open in Google Maps` (as clickable link)
+- Always show as markdown embed: `[📍 Open in Google Maps]({maps_url})`
 - Prefer `source_url` if it's a maps.app.goo.gl link
-- Fallback: construct from name + address
+- Fallback: construct from name + address as `https://www.google.com/maps/search/?api=1&query={encoded_name+address}`
 
 ## Header
 - Use `🍽` for restaurants, `🍸` for bars
@@ -131,7 +131,7 @@ Then format each place following the structure above.
 🍽 Restaurants in Wan Chai:
 
 1. Abbraccio ⭐ 4.5 (OR) · ⭐ 4.6 (Google, 320 reviews)
-   📍 Open in Google Maps
+   [📍 Open in Google Maps](https://maps.app.goo.gl/abc123)
    💎 Secret gem!
    🍜 Cuisine: italian
    🟢 Open now
@@ -140,13 +140,13 @@ Then format each place following the structure above.
    🎟 Walk-in, no booking needed
 
 2. Bo Innovation ⭐ 4.5 (OR) · ⭐ 4.5 (Google, 890 reviews)
-   📍 Open in Google Maps
+   [📍 Open in Google Maps](https://www.google.com/maps/search/?api=1&query=Bo+Innovation+Ship+Street+Wan+Chai)
    ⭐⭐ Michelin
    🍜 Cuisine: chinese, fine-dining
    🟢 Open now
    🚶 ~2 min walk (200m) · 🚗 ~1 min drive (200m)
    📫 Shop A, UG/F, Block 8, Ship Street, Wan Chai
-   🎟 Book here
+   [🎟 Book here](https://chope.com/bo-innovation)
 
 Want me to try a specific cuisine — Italian, Japanese, Thai?
 ```
