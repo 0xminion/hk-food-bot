@@ -1,7 +1,6 @@
 """Shared formatting and keyboard utilities for bot handlers."""
 
 import logging
-import random
 from urllib.parse import quote_plus
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
@@ -12,7 +11,7 @@ from engine.time_aware import get_open_status_label
 logger = logging.getLogger(__name__)
 
 # Conversation states shared across handlers and bot.py
-LOCATION, CUISINE, OTHER_INPUT, SURPRISE_LOCATION = range(4)
+LOCATION, PRICE, CUISINE, OTHER_INPUT, SURPRISE_LOCATION = range(5)
 
 # HK area definitions (keyed by short label, value = (lat, lng))
 HK_AREAS = {
@@ -39,10 +38,51 @@ def build_area_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(rows)
 
 
+# Price range labels and matching logic
+PRICE_OPTIONS = [
+    ("any", "Any budget"),
+    ("$", "💰 Cheap eats"),
+    ("$$", "💰💰 Mid-range"),
+    ("$$$", "💰💰💰 Upscale"),
+    ("$$$$", "💰💰💰💰 Fine dining"),
+]
+
+
+def build_price_keyboard() -> InlineKeyboardMarkup:
+    """Build inline keyboard with budget filter options."""
+    buttons = [
+        InlineKeyboardButton(label, callback_data=f"price:{code}")
+        for code, label in PRICE_OPTIONS
+    ]
+    rows = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
+    return InlineKeyboardMarkup(rows)
+
+
+def price_matches(price_range: str, selected: str) -> bool:
+    """Check if a place's price_range matches the selected budget filter."""
+    if selected == "any" or not price_range:
+        return True
+    # Normalize: count dollar signs in both
+    selected_dollars = selected.count("$")
+    range_dollars = price_range.count("$")
+    if range_dollars == 0:
+        return True  # Unknown price — include it
+    return range_dollars == selected_dollars
+
+
 def build_cuisine_keyboard(cuisines: list[str]) -> InlineKeyboardMarkup:
-    """Build inline keyboard with cuisine options, surprise me, and others."""
-    choices = list(dict.fromkeys(cuisines))[:10]
-    random.shuffle(choices)
+    """Build inline keyboard with cuisine options, surprise me, and others.
+
+    Cuisines are sorted by taste profile weight (highest first) so the user's
+    favorites appear first. Top 10 are shown.
+    """
+    from engine.taste import get_cuisine_weight
+
+    # Deduplicate preserving order, then sort by taste weight descending
+    unique = list(dict.fromkeys(cuisines))
+    unique.sort(key=lambda c: get_cuisine_weight(c), reverse=True)
+    choices = unique[:10]
+
     buttons = [
         InlineKeyboardButton(c.title(), callback_data=f"cuisine:{c}")
         for c in choices

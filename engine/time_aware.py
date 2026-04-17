@@ -65,6 +65,21 @@ def parse_hours_range(hours_str: str) -> Optional[tuple[int, int]]:
     return (start_h, end_h)
 
 
+def parse_all_hours_ranges(hours_str: str) -> list[tuple[int, int]]:
+    """
+    Parse ALL time ranges from a string. Handles multiple periods like:
+    '12:00-14:30, 18:00-22:00' → [(12, 14), (18, 22)]
+    """
+    ranges = []
+    for match in re.finditer(r'(\d{1,2}):?(\d{2})?\s*[-–]\s*(\d{1,2}):?(\d{2})?', hours_str):
+        start_h = int(match.group(1))
+        end_h = int(match.group(3))
+        if end_h == 0:
+            end_h = 24
+        ranges.append((start_h, end_h))
+    return ranges
+
+
 def parse_opening_hours(opening_hours: str) -> dict[str, list[tuple[int, int]]]:
     """
     Parse structured opening hours string into a dict of day -> [(start, end)].
@@ -74,6 +89,7 @@ def parse_opening_hours(opening_hours: str) -> dict[str, list[tuple[int, int]]]:
     - "Mo-Su 12:00-23:00"
     - "11:00-22:00" (assumes all days)
     - "Mo-We,Fr 12:00-22:00"
+    - "Mo-Su 12:00-14:30, 18:00-22:00" (multi-period)
     """
     result: dict[str, list[tuple[int, int]]] = {}
 
@@ -82,9 +98,9 @@ def parse_opening_hours(opening_hours: str) -> dict[str, list[tuple[int, int]]]:
 
     hours_str = opening_hours.strip()
 
-    # Try to extract time range
-    time_range = parse_hours_range(hours_str)
-    if not time_range:
+    # Extract ALL time ranges (handles multi-period like lunch + dinner)
+    time_ranges = parse_all_hours_ranges(hours_str)
+    if not time_ranges:
         return result
 
     # Try to extract day range
@@ -112,7 +128,8 @@ def parse_opening_hours(opening_hours: str) -> dict[str, list[tuple[int, int]]]:
 
     for day_idx in days_to_apply:
         day_name = DAY_NAMES[day_idx]
-        result.setdefault(day_name, []).append(time_range)
+        for time_range in time_ranges:
+            result.setdefault(day_name, []).append(time_range)
 
     return result
 

@@ -6,42 +6,23 @@ Checks which venues don't have Google data cached, then resolves them
 via Camoufox for future queries.
 """
 
-import json
 import logging
 import threading
-from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-_CACHE_FILE = Path(__file__).parent.parent / "data" / "google_ratings_cache.json"
 _RESOLVING: set[str] = set()  # Currently being resolved (avoid duplicates)
 _LOCK = threading.Lock()
 
 
-def _load_cache() -> dict:
-    """Load the Google ratings cache."""
-    if not _CACHE_FILE.exists():
-        return {}
-    try:
-        with open(_CACHE_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return {}
-
-
-def _save_cache(cache: dict):
-    """Save cache atomically."""
-    _CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    tmp = _CACHE_FILE.with_suffix(".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(cache, f, ensure_ascii=False, indent=2)
-    tmp.rename(_CACHE_FILE)
-
-
 def _resolve_worker(venues: list[dict]):
     """Background worker to resolve venues using a single browser session."""
-    cache = _load_cache()
+    from data.google_cache import get_cache, save_cache
+
+    cache = get_cache()
+    # Take a local copy so we don't hold the lock during browser ops
+    local_cache = dict(cache)
     resolved = 0
 
     try:
@@ -69,7 +50,7 @@ def _resolve_worker(venues: list[dict]):
 
             for v in venues:
                 key = f"{v['name']}|{v['address']}"
-                if key in cache and cache[key].get("google_rating"):
+                if key in local_cache and local_cache[key].get("google_rating"):
                     continue
 
                 try:
@@ -86,7 +67,7 @@ def _resolve_worker(venues: list[dict]):
                         reviews = int(m.group(2).replace(",", "").replace(".", ""))
                         if 1.0 <= rating <= 5.0:
                             from datetime import datetime, timezone
-                            cache[key] = {
+                            local_cache[key] = {
                                 "google_rating": rating,
                                 "google_reviews": reviews,
                                 "resolved": True,
@@ -106,7 +87,8 @@ def _resolve_worker(venues: list[dict]):
         logger.error(f"Batch resolve failed: {e}")
 
     if resolved > 0:
-        _save_cache(cache)
+        from data.google_cache import merge_and_save
+        merge_and_save(local_cache)
         logger.info(f"Batch resolve complete: {resolved} venues cached")
 
     # Clear resolving set
@@ -121,7 +103,9 @@ def lazy_resolve_places(places: list):
 
     Non-blocking — spawns a thread. Results are cached for future queries.
     """
-    cache = _load_cache()
+    from data.google_cache import get_cache
+
+    cache = get_cache()
     to_resolve = []
 
     for p in places:
@@ -142,6 +126,7 @@ def lazy_resolve_places(places: list):
 
 def needs_google_resolution(name: str, address: str) -> bool:
     """Check if a venue needs Google resolution."""
-    cache = _load_cache()
+    from data.google_cache import get_cache
+    cache = get_cache()
     key = f"{name}|{address}"
     return key not in cache or not cache[key].get("google_rating")

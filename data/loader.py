@@ -109,17 +109,9 @@ def load_personal_exclusions(data_dir: str | Path) -> set[str]:
 
 
 def _load_google_cache(data_dir: str | Path) -> dict:
-    """Load Google ratings cache for enriching Place objects on load."""
-    path = Path(data_dir) / "google_ratings_cache.json"
-    if not path.exists():
-        return {}
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            cache = json.load(f)
-        logger.info(f"Loaded {len(cache)} Google ratings from cache")
-        return cache
-    except (json.JSONDecodeError, IOError):
-        return {}
+    """Load Google ratings cache from shared singleton."""
+    from data.google_cache import get_cache
+    return get_cache()
 
 
 def load_places(csv_path: str | Path) -> list[Place]:

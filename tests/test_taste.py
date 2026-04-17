@@ -11,33 +11,35 @@ from data.loader import Place
 
 
 def test_high_preference_cuisine():
-    """All cuisines score the same — flat weighting."""
+    """Italian (weight 1.0) should score high."""
     place = Place(name="Test", type="restaurant", cuisine_tags=["italian"])
     score = score_place(place)
-    assert score == 0.5
+    assert score == 1.0
 
 
 def test_low_preference_cuisine():
-    """Unknown cuisine scores the same as any other — flat weighting."""
+    """Unknown cuisine scores the default weight."""
     place = Place(name="Test", type="restaurant", cuisine_tags=["obscure-cuisine"])
     score = score_place(place)
-    assert score == 0.5
+    assert score == 0.2  # DEFAULT_CUISINE_WEIGHT
 
 
 def test_no_cuisine_tags():
-    """Place with no cuisine tags gets same flat score."""
+    """Place with no cuisine tags gets the default weight."""
     place = Place(name="Test", type="restaurant", cuisine_tags=[])
     score = score_place(place)
-    assert score == 0.5
+    assert score == 0.2  # DEFAULT_CUISINE_WEIGHT
 
 
 def test_multiple_cuisine_bonus():
-    """All cuisines score the same regardless of count — flat weighting."""
+    """Multiple matching tags get a small bonus."""
     single = Place(name="A", type="restaurant", cuisine_tags=["thai"])
     multi = Place(name="B", type="restaurant", cuisine_tags=["thai", "vietnamese"])
     score_single = score_place(single)
     score_multi = score_place(multi)
-    assert score_single == score_multi == 0.5
+    # Both are >= 0.5 weight, multi has 2 matching tags → bonus
+    assert score_single == 0.75  # thai=0.75
+    assert score_multi > score_single  # bonus for multiple matches
 
 
 def test_score_and_rank(sample_places):

@@ -19,9 +19,7 @@ Negative signals (disqualify):
 - Very high reviews (already mainstream)
 """
 
-import json
 import logging
-from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -52,36 +50,14 @@ THRESHOLDS = {
 
 # ── Google Ratings Cache ──────────────────────────────────────────────────────
 
-_GOOGLE_CACHE: Optional[dict] = None
-
-
-def _load_google_cache() -> dict:
-    """Lazy-load Google ratings cache."""
-    global _GOOGLE_CACHE
-    if _GOOGLE_CACHE is not None:
-        return _GOOGLE_CACHE
-
-    cache_file = Path(__file__).parent.parent / "data" / "google_ratings_cache.json"
-    if cache_file.exists():
-        try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                _GOOGLE_CACHE = json.load(f)
-            logger.info(f"Loaded Google ratings cache: {len(_GOOGLE_CACHE)} entries")
-        except (json.JSONDecodeError, IOError):
-            _GOOGLE_CACHE = {}
-    else:
-        _GOOGLE_CACHE = {}
-    return _GOOGLE_CACHE
+# Deprecated: use data.google_cache.get_google_rating() directly.
+# Kept for backward compatibility with get_google_rating() below.
 
 
 def get_google_rating(name: str, address: str) -> Optional[dict]:
     """Get cached Google rating for a venue."""
-    cache = _load_google_cache()
-    key = f"{name.strip()}|{address.strip()}"
-    entry = cache.get(key)
-    if entry and entry.get("google_rating"):
-        return entry
-    return None
+    from data.google_cache import get_google_rating as _get
+    return _get(name, address)
 
 
 # ── Major Malls ───────────────────────────────────────────────────────────────

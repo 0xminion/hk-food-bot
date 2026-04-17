@@ -5,8 +5,6 @@ Flow: /drink? → area picker → cuisine picker → 5 bar recommendations
 """
 
 import logging
-import random
-import re
 from pathlib import Path
 
 from telegram import Update
@@ -17,11 +15,13 @@ from engine.recommender import recommend, get_available_spot_types
 from handlers.common import (
     CUISINE,
     LOCATION,
+    PRICE,
     OTHER_INPUT,
     SURPRISE_LOCATION,
     HK_AREAS,
     build_area_keyboard,
     build_cuisine_keyboard,
+    build_price_keyboard,
     build_location_request_keyboard,
     build_more_button_keyboard,
     format_recommendations_message,
@@ -44,8 +44,8 @@ def _build_cuisine_suggestions(all_places, area_name, lat, lng):
     cuisines = get_available_spot_types(all_places, lat, lng, area_name=area_name)
     if not cuisines:
         return []
-    choices = list(dict.fromkeys(cuisines[:10]))
-    random.shuffle(choices)
+    # Deduplicate preserving order — sorting happens in build_cuisine_keyboard
+    choices = list(dict.fromkeys(cuisines))
     return choices
 
 
@@ -60,7 +60,7 @@ async def drink_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 
 async def drink_location_chosen(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Handle area selection — show drink type options."""
+    """Handle area selection — show price filter options."""
     query = update.callback_query
     try:
         await query.answer()
@@ -79,7 +79,31 @@ async def drink_location_chosen(update: Update, context: ContextTypes.DEFAULT_TY
     lat, lng = HK_AREAS[area_name]
     context.user_data["location"] = (area_name, lat, lng)
 
+    try:
+        await query.edit_message_text(
+            f"📍 <b>{area_name}</b> selected.\n\n💰 Any budget preference?",
+            parse_mode="HTML",
+            reply_markup=build_price_keyboard(),
+        )
+    except Exception:
+        logger.error("Failed to edit message for price selection", exc_info=True)
+        return ConversationHandler.END
+    return PRICE
+
+
+async def drink_price_chosen(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle price selection — show drink type options."""
+    query = update.callback_query
+    try:
+        await query.answer()
+    except Exception:
+        logger.warning("Failed to answer callback query", exc_info=True)
+
+    price = query.data.replace("price:", "")
+    context.user_data["price_filter"] = price
+
     all_places = _get_places_from_cache(context)
+    area_name, lat, lng = context.user_data.get("location", ("Unknown", 22.2783, 114.1747))
     suggestions = _build_cuisine_suggestions(all_places, area_name, lat, lng)
 
     if not suggestions:
@@ -138,6 +162,7 @@ async def drink_cuisine_chosen(update: Update, context: ContextTypes.DEFAULT_TYP
         area_lng=lng,
         cuisine=drink_type,
         area_name=area_name,
+        price_filter=context.user_data.get("price_filter"),
     )
 
     shown_names = [p.name for p in result.places]
@@ -197,6 +222,7 @@ async def drink_other_cuisine_received(update: Update, context: ContextTypes.DEF
             area_lng=lng,
             cuisine=drink_type,
             area_name=area_name,
+            price_filter=context.user_data.get("price_filter"),
         )
     else:
         from data.loader import filter_by_any_tag, filter_by_type
@@ -207,6 +233,11 @@ async def drink_other_cuisine_received(update: Update, context: ContextTypes.DEF
             area_name, lat, lng, scope_radius
         )
         matched = filter_by_any_tag(nearby, cuisine_tags)
+        # Apply price filter
+        price_filter = context.user_data.get("price_filter")
+        if price_filter and price_filter != "any":
+            from handlers.common import price_matches
+            matched = [p for p in matched if price_matches(p.price_range, price_filter)]
         from engine.recommender import RecommendationResult
         result = RecommendationResult(places=matched[:5])
         result.crossover_suggestion = text

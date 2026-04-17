@@ -6,6 +6,7 @@ Matches award records to places by name and provides scoring boosts.
 import json
 import logging
 import re
+from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -104,7 +105,8 @@ def get_award_boost(place_name: str, data_dir: str | Path) -> tuple[float, list[
         multiplier = SOURCE_MULTIPLIERS.get(source, 1.0)
 
         # Recency bonus: within 5 years gets 1.5x, within 10 years gets 1.0x
-        age = 2026 - year if year else 10
+        current_year = datetime.now().year
+        age = current_year - year if year else 10
         recency = 1.5 if age <= 5 else (1.0 if age <= 10 else 0.5)
 
         total_score += base_score * multiplier * recency

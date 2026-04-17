@@ -33,15 +33,14 @@ def test_build_area_keyboard():
     assert total_buttons == 10
 
 
-def test_build_cuisine_keyboard(monkeypatch):
-    """Cuisine keyboard should include 10 choices plus surprise and others, in shuffled order."""
-    def reverse_shuffle(items):
-        items.reverse()
-    monkeypatch.setattr("handlers.common.random.shuffle", reverse_shuffle)
+def test_build_cuisine_keyboard():
+    """Cuisine keyboard should include up to 10 choices plus surprise and others, sorted by taste weight."""
     kb = build_cuisine_keyboard(["thai", "italian", "japanese", "spanish", "french", "korean", "indian", "bakery", "dessert", "ramen"])
     total_buttons = sum(len(row) for row in kb.inline_keyboard)
     assert total_buttons == 12  # 10 cuisines + surprise + others
-    assert kb.inline_keyboard[0][0].text == "Ramen"  # reversed order proves shuffle was used
+    # First button should be highest-weight cuisine (italian=1.0)
+    first_text = kb.inline_keyboard[0][0].text
+    assert first_text == "Italian"
 
 
 def test_build_more_button_keyboard():

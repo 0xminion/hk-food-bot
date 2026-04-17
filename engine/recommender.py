@@ -175,6 +175,7 @@ def recommend(
     allow_expansion: bool = False,
     exclude_place_names: set[str] | None = None,
     skip_personal_exclusions: bool = False,
+    price_filter: str | None = None,
 ) -> RecommendationResult:
     """
     Main recommendation pipeline.
@@ -236,6 +237,13 @@ def recommend(
 
     if not nearby:
         nearby = filtered if area_name is None else []
+
+    # Step 3b: Price range filtering
+    if price_filter and price_filter != "any" and nearby:
+        from handlers.common import price_matches
+        before = len(nearby)
+        nearby = [p for p in nearby if price_matches(p.price_range, price_filter)]
+        logger.info(f"Step 3b - Price filter ({price_filter}): {before - len(nearby)} removed")
 
     # Step 4: Time-aware filtering
     if use_time_filter and nearby:

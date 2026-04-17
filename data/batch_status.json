@@ -1,16 +1,11 @@
 {
-  "timestamp": "2026-04-16T05:19:41.707918+00:00",
+  "timestamp": "2026-04-17T00:10:01.849352+00:00",
   "workers": {
-    "group_a_kowloon": {
-      "running": true,
-      "attempt": 1,
-      "cache_size": 18
+    "completed": {
+      "group_a_kowloon": false,
+      "group_b_nt_hki": false
     },
-    "group_b_nt_hki": {
-      "running": true,
-      "attempt": 1,
-      "cache_size": 19
-    }
+    "final_cache_size": 12738
   },
-  "main_cache_size": 3872
+  "main_cache_size": 12738
 }

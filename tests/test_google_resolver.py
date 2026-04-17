@@ -133,14 +133,12 @@ class TestSecretGemSourceAware:
         from engine.secret_gem import apply_secret_gem_rules
         place = self._make_place(or_rating=3.5, review_count=500)
 
-        google_cache = {
-            f"{place.name}|{place.address}": {
-                "google_rating": 4.5,
-                "google_reviews": 800,
-            }
+        google_entry = {
+            "google_rating": 4.5,
+            "google_reviews": 800,
         }
 
-        with patch("engine.secret_gem._load_google_cache", return_value=google_cache):
+        with patch("data.google_cache.get_google_rating", return_value=google_entry):
             # 800 Google reviews < 1000 threshold → should be gem
             assert apply_secret_gem_rules(place) is True
 
@@ -149,14 +147,12 @@ class TestSecretGemSourceAware:
         from engine.secret_gem import apply_secret_gem_rules
         place = self._make_place(or_rating=4.5, review_count=50)
 
-        google_cache = {
-            f"{place.name}|{place.address}": {
-                "google_rating": 4.5,
-                "google_reviews": 6000,
-            }
+        google_entry = {
+            "google_rating": 4.5,
+            "google_reviews": 6000,
         }
 
-        with patch("engine.secret_gem._load_google_cache", return_value=google_cache):
+        with patch("data.google_cache.get_google_rating", return_value=google_entry):
             assert apply_secret_gem_rules(place) is False
 
     def test_mall_disqualifies(self):
@@ -180,31 +176,27 @@ class TestSecretGemSourceAware:
 class TestLazyResolve:
     """Test lazy resolution trigger and caching."""
 
-    def test_needs_resolution_no_cache(self, tmp_path):
+    def test_needs_resolution_no_cache(self):
         from engine.lazy_resolve import needs_google_resolution
-        with patch("engine.lazy_resolve._CACHE_FILE", tmp_path / "empty.json"):
+        with patch("data.google_cache.get_cache", return_value={}):
             assert needs_google_resolution("Test", "Address") is True
 
-    def test_needs_resolution_cached(self, tmp_path):
+    def test_needs_resolution_cached(self):
         from engine.lazy_resolve import needs_google_resolution
-        cache_file = tmp_path / "cache.json"
         cache = {"Test|Address": {"google_rating": 4.5, "google_reviews": 100}}
-        cache_file.write_text(json.dumps(cache))
-        with patch("engine.lazy_resolve._CACHE_FILE", cache_file):
+        with patch("data.google_cache.get_cache", return_value=cache):
             assert needs_google_resolution("Test", "Address") is False
 
-    def test_lazy_resolve_skips_cached(self, tmp_path):
+    def test_lazy_resolve_skips_cached(self):
         """lazy_resolve_places should not re-resolve already cached venues."""
         from engine.lazy_resolve import lazy_resolve_places
-        cache_file = tmp_path / "cache.json"
         cache = {"Test|Address": {"google_rating": 4.5, "google_reviews": 100}}
-        cache_file.write_text(json.dumps(cache))
 
         place = MagicMock()
         place.name = "Test"
         place.address = "Address"
 
-        with patch("engine.lazy_resolve._CACHE_FILE", cache_file):
+        with patch("data.google_cache.get_cache", return_value=cache):
             # Should not spawn a thread since venue is already cached
             lazy_resolve_places([place])
             # If it tried to resolve, it would fail since camoufox isn't mocked

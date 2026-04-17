@@ -27,6 +27,7 @@ from telegram.ext import (
 from handlers.eat import (
     eat_entry,
     eat_location_chosen,
+    eat_price_chosen,
     eat_cuisine_chosen,
     eat_other_cuisine_received,
     eat_surprise_location_received,
@@ -34,12 +35,13 @@ from handlers.eat import (
 from handlers.drink import (
     drink_entry,
     drink_location_chosen,
+    drink_price_chosen,
     drink_cuisine_chosen,
     drink_other_cuisine_received,
     drink_surprise_location_received,
 )
 from engine.recommender import recommend
-from handlers.common import LOCATION, CUISINE, OTHER_INPUT, SURPRISE_LOCATION, format_recommendations_message
+from handlers.common import LOCATION, PRICE, CUISINE, OTHER_INPUT, SURPRISE_LOCATION, format_recommendations_message
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -127,6 +129,7 @@ async def handle_more_recommendations(update: Update, context: ContextTypes.DEFA
         area_name=state.get("area_name"),
         allow_expansion=True,
         exclude_place_names=current_excludes,
+        price_filter=context.user_data.get("price_filter"),
     )
     new_shown_names = [p.name for p in result.places]
     current_excludes.update(new_shown_names)
@@ -203,11 +206,26 @@ def main() -> None:
         print("Get one from @BotFather on Telegram.")
         return
 
+    # Startup health check: validate data file exists and is loadable
+    csv_path = BOT_DIR / config.get("data", {}).get("places_csv", "data/merged_places.csv")
+    if not csv_path.exists():
+        print(f"ERROR: Data file not found: {csv_path}")
+        print("Run the data pipeline first: python scripts/merge_data.py")
+        return
+    from data.loader import load_places
+    places = load_places(csv_path)
+    if not places:
+        print(f"ERROR: Data file exists but loaded 0 places from {csv_path}")
+        print("Check that the CSV has valid data and correct column headers.")
+        return
+    logger.info(f"Health check passed: {len(places)} places loaded from {csv_path.name}")
+
     app = Application.builder().token(token).build()
 
-    # Store config and bot dir in bot_data for handlers to access
+    # Store config, bot dir, and pre-loaded places in bot_data for handlers
     app.bot_data["config"] = config
     app.bot_data["bot_dir"] = str(BOT_DIR)
+    app.bot_data["_cached_places"] = places  # Pre-loaded at startup, not lazy
 
     # Conversation handler for /eat?
     eat_handler = ConversationHandler(
@@ -215,6 +233,9 @@ def main() -> None:
         states={
             LOCATION: [
                 CallbackQueryHandler(eat_location_chosen, pattern=r"^loc:"),
+            ],
+            PRICE: [
+                CallbackQueryHandler(eat_price_chosen, pattern=r"^price:"),
             ],
             CUISINE: [
                 CallbackQueryHandler(eat_cuisine_chosen, pattern=r"^cuisine:"),
@@ -238,6 +259,9 @@ def main() -> None:
         states={
             LOCATION: [
                 CallbackQueryHandler(drink_location_chosen, pattern=r"^loc:"),
+            ],
+            PRICE: [
+                CallbackQueryHandler(drink_price_chosen, pattern=r"^price:"),
             ],
             CUISINE: [
                 CallbackQueryHandler(drink_cuisine_chosen, pattern=r"^cuisine:"),

@@ -221,13 +221,18 @@ def main():
             if proc.poll() is not None:
                 cache_after = count_cache(info["worker"]["cache"])
                 added = cache_after - info["cache_before"]
+                csv_path = info["worker"]["csv"]
+                cache_path = info["worker"]["cache"]
+                remaining_after = count_remaining(csv_path, cache_path)
+                was_incomplete = remaining_after > 0 and added < 10  # barely made progress = browser crash
 
-                if proc.returncode == 0:
-                    log(f"[{name}] Completed: +{added}")
-                    results[name] = True
+                if proc.returncode == 0 and not was_incomplete:
+                    log(f"[{name}] Completed: +{added} cached, {remaining_after} remaining")
+                    results[name] = (remaining_after == 0)
                     del processes[name]
                 else:
-                    log(f"[{name}] Crashed (code {proc.returncode}), +{added}")
+                    reason = f"code {proc.returncode}" if proc.returncode != 0 else f"incomplete ({remaining_after} still uncached)"
+                    log(f"[{name}] {reason}, +{added} before exit")
                     if info["attempt"] < MAX_RETRIES:
                         info["attempt"] += 1
                         log(f"[{name}] Restarting (attempt {info['attempt']}/{MAX_RETRIES})")
