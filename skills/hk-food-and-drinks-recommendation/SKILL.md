@@ -150,3 +150,57 @@ Then format each place following the structure above.
 
 Want me to try a specific cuisine — Italian, Japanese, Thai?
 ```
+
+---
+
+## Opinion Layer — Curated Picks
+
+After listing the raw recommendations, always add a curated picks section. Use your judgment to categorize each place — don't just sort by distance or rating, actually think about what makes each spot interesting.
+
+### Format (Bars)
+
+```
+🎯 My picks tonight:
+
+🏠 Closest: {Name} — {one-line why, e.g. "5 min walk, solid old-fashioneds, low-key vibe"}
+🍸 Best cocktail: {Name} — {one-line why, e.g. "their bartender won Asia's 50 Best, the negroni is lethal"}
+🎲 Adventurous: {Name} — {one-line why, e.g. "hidden speakeasy behind a laundromat, you won't find it on Google"}
+🃏 Wildcard: {Name} — {one-line why, e.g. "honestly never been but the reviews are unhinged in a good way"}
+
+💭 Honest take: {2-3 sentences. Real opinion. What you'd actually do tonight. Be blunt.}
+```
+
+### Format (Restaurants)
+
+```
+🎯 My picks tonight:
+
+🏠 Closest: {Name} — {one-line why}
+🔥 Best overall: {Name} — {one-line why, e.g. "Michelin star, the char siu is unreal, worth the walk"}
+🎲 Adventurous: {Name} — {one-line why, e.g. "hole-in-the-wall with 3 tables, the mapo tofu will change your life"}
+🃏 Wildcard: {Name} — {one-line why, e.g. "opened last month, zero reviews but the chef came from Lung King Heen"}
+
+💭 Honest take: {same as bars}
+```
+
+### Rules for each pick
+
+**Bars:**
+- **🏠 Closest** — Nearest walkable option. Not a cop-out pick — must still be decent. If the closest place sucks, say "closest but skip it" and pick the closest *good* one instead.
+- **🍸 Best cocktail** — Highest confidence for drink quality. Weight: cocktail-bar tag, style_tags, bookmark count, review quality signals. Not just highest rating — a 4.5 with 200 reviews where people mention drinks beats a 4.7 with 6 generic reviews.
+- **🎲 Adventurous** — Something off the beaten path. Hidden gems, weird locations (rooftops, basements, behind unmarked doors), niche vibes, places most people haven't tried. Secret gems get priority here.
+- **🃏 Wildcard** — The "fuck it, why not" pick. Could be polarizing, could be amazing. High variance. A place with split reviews, a weird concept, or something you just have a gut feeling about.
+
+**Restaurants:**
+- **🏠 Closest** — Same logic as bars. Nearest *good* food, not just nearest.
+- **🔥 Best overall** — Best food quality signal. Weight: Michelin/awards, OR rating with high bookmark count, popular dishes that stand out, cuisine mastery (a Thai place with 4.8 beats a generic fusion with 4.9).
+- **🎲 Adventurous** — Hole-in-the-walls, places with 3 tables, a cuisine you'd never think to try, or a dish that sounds insane but works. Unusual locations, non-obvious entrances, places locals know but tourists miss.
+- **🃏 Wildcard** — New openings with no reputation, weird menu concepts, polarizing reviews ("either love it or hate it"), or a chef with an interesting pedigree at an unproven venue.
+
+### Honest take guidelines
+
+- Write like you're texting a friend, not writing a review
+- If you've never been, say so — but still give an opinion based on signals
+- Contrarian takes are welcome ("everyone hypes X but Y is better")
+- End with a clear recommendation: "I'd go to {Name}" or "honestly just hit {Name} and call it a night"
+- If the data is weak (few reviews, no hours, sparse info), call it out — don't pretend confidence you don't have
