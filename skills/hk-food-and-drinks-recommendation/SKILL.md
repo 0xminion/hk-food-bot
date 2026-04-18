@@ -26,7 +26,6 @@ Use this format whenever giving restaurant or bar recommendations for Hong Kong.
    🚶 ~{walk_min} min walk ({walk_m}m) · 🚗 ~{drive_min} min drive ({drive_m}m)
    📫 {full address}
    {[🎟 Book here]({booking_url}) / 🎟 Walk-in, no booking needed}
-   {💵 {$ | $$ | $$$ | $$$$}}
 
 2. ...
 
@@ -64,12 +63,6 @@ Want me to try a specific {cuisine/drink type} — {suggestion1}, {suggestion2},
 - Multiple badges space-separated on same line
 
 ### Cuisine/Style
-- Restaurants: `🍜 Cuisine: {comma-separated tags}`
-- Bars: use same format, or `🍸 Style: {tags}` if showing style_tags
-
-### Price Range
-- Show if available: `💵 {$ | $$ | $$$ | $$$$}` or `💵 {OpenRice price text}`
-
 ### Booking
 - If booking_url exists: `[🎟 Book here]({booking_url})` (markdown link)
 - If no booking: `🎟 Walk-in, no booking needed`
