@@ -11,19 +11,19 @@ from engine.time_aware import (
 def test_parse_hours_range_simple():
     """Parse a simple time range."""
     result = parse_hours_range("11:00-22:00")
-    assert result == (11, 22)
+    assert result == (11, 0, 22, 0)
 
 
 def test_parse_hours_range_with_dash():
     """Parse with en-dash."""
     result = parse_hours_range("11:00–22:00")
-    assert result == (11, 22)
+    assert result == (11, 0, 22, 0)
 
 
 def test_parse_hours_range_no_minutes():
     """Parse without minutes."""
     result = parse_hours_range("11-22")
-    assert result == (11, 22)
+    assert result == (11, 0, 22, 0)
 
 
 def test_parse_opening_hours_all_days():
@@ -61,21 +61,21 @@ def test_get_open_status_label_unknown():
 def test_parse_hours_range_midnight():
     """Midnight end (00:00) should be converted to 24."""
     result = parse_hours_range("18:00-00:00")
-    assert result == (18, 24)
+    assert result == (18, 0, 24, 0)
 
 
 def test_parse_opening_hours_midnight_end():
     """Hours ending at midnight should apply to all days with end=24."""
     result = parse_opening_hours("Mo-Su 18:00-00:00")
     assert "mon" in result
-    assert result["mon"] == [(18, 24)]
+    assert result["mon"] == [(18, 0, 24, 0)]
 
 
 def test_parse_opening_hours_overnight():
     """Overnight hours (22:00-02:00) should parse correctly."""
     result = parse_opening_hours("Mo-Su 22:00-02:00")
     assert "mon" in result
-    assert result["mon"] == [(22, 2)]
+    assert result["mon"] == [(22, 0, 2, 0)]
 
 
 def test_parse_opening_hours_no_day_range():

@@ -13,8 +13,16 @@ import csv
 import json
 import os
 import re
+import sys
 from pathlib import Path
 from collections import Counter
+
+# Ensure project root is on sys.path for utils imports
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from utils.name_norm import normalize_name, build_name_index
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 OR_CSV = DATA_DIR / "openrice_places.csv"
@@ -60,13 +68,19 @@ def _sanitize_bool_field(value: str) -> str:
     return "false"
 
 
-def enrich_google_rating(row: dict, cache: dict) -> dict:
+def enrich_google_rating(row: dict, cache: dict, name_index: dict | None = None) -> dict:
     """Enrich row with Google ratings from cache if not already present.
-    Tries exact name|addr match first, falls back to name-only match."""
+    Tries exact name|addr match first, falls back to name-index lookup."""
     cache_key = f"{row['name'].strip()}|{row.get('address', '').strip()}"
     cached = cache.get(cache_key)
-    if not cached:
-        # Fallback: name-only match (scan cache for matching name)
+    if not cached and name_index is not None:
+        # O(1) fallback: pre-built name index
+        norm = normalize_name(row['name'].strip())
+        matches = name_index.get(norm, [])
+        if matches:
+            cached = matches[0][1]  # Most reviewed entry
+    elif not cached:
+        # Legacy fallback: linear scan (shouldn't happen if name_index is passed)
         name_lower = row['name'].strip().lower()
         for ck, cv in cache.items():
             if ck.split("|")[0].strip().lower() == name_lower:
@@ -118,6 +132,10 @@ def normalize_tags(raw: str) -> str:
 def main():
     cache = load_google_cache()
     print(f"Google cache: {len(cache)} entries")
+
+    # Pre-build name index for O(1) fallback lookups
+    _name_index = build_name_index(cache)
+    print(f"Name index: {len(_name_index)} unique franchise names")
 
     # Collect all venues by dedup key
     venues: dict[str, dict] = {}
@@ -231,17 +249,26 @@ def main():
     enriched = 0
     for key, venue in venues.items():
         before = venue.get("google_rating")
-        venue = enrich_google_rating(venue, cache)
+        venue = enrich_google_rating(venue, cache, _name_index)
         venues[key] = venue
         if venue.get("google_rating") and not before:
             enriched += 1
     print(f"Enriched {enriched} venues with Google cache ratings")
 
     # Normalize coordinates for safety
-    def safe_coord(val):
+    def safe_lat(val):
         try:
             f = float(val)
-            if -90 <= f <= 180 and f != 0:
+            if -90 <= f <= 90 and f != 0:
+                return str(f)
+        except (ValueError, TypeError):
+            pass
+        return ""
+
+    def safe_lng(val):
+        try:
+            f = float(val)
+            if -180 <= f <= 180 and f != 0:
                 return str(f)
         except (ValueError, TypeError):
             pass
@@ -259,8 +286,8 @@ def main():
             pass
 
         # Sanitize coordinates
-        v["lat"] = safe_coord(v.get("lat", ""))
-        v["lng"] = safe_coord(v.get("lng", ""))
+        v["lat"] = safe_lat(v.get("lat", ""))
+        v["lng"] = safe_lng(v.get("lng", ""))
 
         # For bars: merge style_tags into cuisine tags + name-based tagging
         if v["type"] == "bar":

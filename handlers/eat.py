@@ -215,6 +215,9 @@ async def eat_other_cuisine_received(update: Update, context: ContextTypes.DEFAU
     all_places = context.user_data.get("all_places", [])
     area_name, lat, lng = context.user_data.get("location", ("Unknown", 22.2783, 114.1747))
 
+    # Default cuisine for state persistence (covers regional multi-tag queries)
+    cuisine = text
+
     if len(cuisine_tags) == 1:
         # Single cuisine — use normal flow
         cuisine = cuisine_tags[0]

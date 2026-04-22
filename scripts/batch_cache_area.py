@@ -102,7 +102,7 @@ for i, v in enumerate(to_resolve):
         time.sleep(2.5)
 
         text = page.inner_text("body")
-        m = re.search(r"(\d[.,]\d)\s*\((\d[\d.,]*)\)", text)
+        m = re.search(r"(\d(?:[.,]\d)?)\s*\((\d[\d.,]*)\)", text)
         if m:
             rating = float(m.group(1).replace(",", "."))
             reviews = int(m.group(2).replace(",", "").replace(".", ""))

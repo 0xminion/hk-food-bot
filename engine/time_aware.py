@@ -48,39 +48,50 @@ def get_time_of_day() -> str:
         return "late-night"  # midnight to 6am
 
 
-def parse_hours_range(hours_str: str) -> Optional[tuple[int, int]]:
+def parse_hours_range(hours_str: str) -> Optional[tuple[int, int, int, int]]:
     """
-    Parse a time range like '11:00-22:00' into (start_hour, end_hour).
+    Parse a time range like '11:30-22:00' into (start_hour, start_min, end_hour, end_min).
     Returns None if parsing fails.
     """
-    match = re.search(r'(\d{1,2}):?(\d{2})?\s*[-–]\s*(\d{1,2}):?(\d{2})?', hours_str)
-    if not match:
-        return None
-
-    start_h = int(match.group(1))
-    end_h = int(match.group(3))
-    # Convert midnight (00:00) to 24 for consistent range logic
-    if end_h == 0:
+    match = re.search(r'(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})', hours_str)
+    if match:
+        start_h = int(match.group(1))
+        start_m = int(match.group(2))
+        end_h = int(match.group(3))
+        end_m = int(match.group(4))
+    else:
+        # Fallback for strings without colon like "11-22"
+        match = re.search(r'(\d{1,2})\s*[-–]\s*(\d{1,2})', hours_str)
+        if not match:
+            return None
+        start_h = int(match.group(1))
+        start_m = 0
+        end_h = int(match.group(2))
+        end_m = 0
+    # Convert midnight (00:00) to 24:00 for consistent range logic
+    if end_h == 0 and end_m == 0:
         end_h = 24
-    return (start_h, end_h)
+    return (start_h, start_m, end_h, end_m)
 
 
-def parse_all_hours_ranges(hours_str: str) -> list[tuple[int, int]]:
+def parse_all_hours_ranges(hours_str: str) -> list[tuple[int, int, int, int]]:
     """
     Parse ALL time ranges from a string. Handles multiple periods like:
-    '12:00-14:30, 18:00-22:00' → [(12, 14), (18, 22)]
+    '12:00-14:30, 18:00-22:00' → [(12, 0, 14, 30), (18, 0, 22, 0)]
     """
     ranges = []
-    for match in re.finditer(r'(\d{1,2}):?(\d{2})?\s*[-–]\s*(\d{1,2}):?(\d{2})?', hours_str):
+    for match in re.finditer(r'(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})', hours_str):
         start_h = int(match.group(1))
+        start_m = int(match.group(2))
         end_h = int(match.group(3))
-        if end_h == 0:
+        end_m = int(match.group(4))
+        if end_h == 0 and end_m == 0:
             end_h = 24
-        ranges.append((start_h, end_h))
+        ranges.append((start_h, start_m, end_h, end_m))
     return ranges
 
 
-def parse_opening_hours(opening_hours: str) -> dict[str, list[tuple[int, int]]]:
+def parse_opening_hours(opening_hours: str) -> dict[str, list[tuple[int, int, int, int]]]:
     """
     Parse structured opening hours string into a dict of day -> [(start, end)].
     
@@ -131,6 +142,21 @@ def parse_opening_hours(opening_hours: str) -> dict[str, list[tuple[int, int]]]:
         for time_range in time_ranges:
             result.setdefault(day_name, []).append(time_range)
 
+    # Also handle comma-separated individual days like "Mo,We,Fr 11:00-22:00"
+    single_days = re.finditer(
+        r'\b(mo|tu|we|th|fr|sa|su|mon|tue|wed|thu|fri|sat|sun)\b',
+        hours_str, re.IGNORECASE
+    )
+    seen_single = set()
+    for m in single_days:
+        d = day_patterns.get(m.group(1).lower())
+        if d is not None and d not in seen_single:
+            seen_single.add(d)
+            if d not in days_to_apply:
+                day_name = DAY_NAMES[d]
+                for time_range in time_ranges:
+                    result.setdefault(day_name, []).append(time_range)
+
     return result
 
 
@@ -161,14 +187,16 @@ def is_open_now(opening_hours: str) -> Optional[bool]:
     current_time_decimal = current_hour + current_minute / 60.0
 
     day_hours = parsed.get(current_day, [])
-    for start_h, end_h in day_hours:
-        # Handle overnight hours (e.g., 22:00-02:00, where end_h=2 < start_h=22)
-        if end_h <= start_h:
-            # Overnight: open from start_h until midnight, or from midnight until end_h
-            if current_time_decimal >= start_h or current_time_decimal < end_h:
+    for start_h, start_m, end_h, end_m in day_hours:
+        start_dec = start_h + start_m / 60.0
+        end_dec = end_h + end_m / 60.0
+        # Handle overnight hours (e.g., 22:00-02:00, where end_dec < start_dec)
+        if end_dec <= start_dec:
+            # Overnight: open from start until midnight, or from midnight until end
+            if current_time_decimal >= start_dec or current_time_decimal < end_dec:
                 return True
         else:
-            if start_h <= current_time_decimal < end_h:
+            if start_dec <= current_time_decimal < end_dec:
                 return True
 
     return False

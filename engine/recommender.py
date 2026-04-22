@@ -8,6 +8,7 @@ secret gem detection, and distance calculation into a unified pipeline.
 import logging
 import random
 import re
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from engine.crossover import get_crossover_cuisine, get_serendipitous_cuisine, g
 from engine.time_aware import filter_open_places, get_open_status_label
 from engine.lazy_resolve import lazy_resolve_places
 from handlers.common import HK_AREAS
+from utils.name_norm import normalize_name
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +64,7 @@ FOOD_ONLY_TAGS = {"cafe", "restaurant", "bakery", "dessert", "brunch"}
 # Cache for loaded exclusion lists (loaded once per process)
 _loaded_closed: set[str] | None = None
 _loaded_personal: set[str] | None = None
+_EXCLUSION_LOCK = threading.Lock()
 
 
 @dataclass
@@ -70,12 +73,6 @@ class RecommendationResult:
     places: list[Place] = field(default_factory=list)
     crossover_suggestion: str = ""
     expanded_search: bool = False
-
-
-def _normalize_name(name: str) -> str:
-    """Normalize place name for franchise dedup — strip (Location) suffixes like '(Wan Chai)'."""
-    return re.sub(r'\s*\([^)]*\)\s*$', '', name).strip().lower()
-
 
 def _filter_bottom_percentile(places: list[Place], percentile: int = 20) -> list[Place]:
     """Remove places in the bottom N percentile by rating."""
@@ -196,13 +193,14 @@ def recommend(
     result = RecommendationResult()
     num_results = max(1, min(num_results, 50))  # Clamp between 1 and 50
 
-    # Load exclusion lists (cached)
+    # Load exclusion lists (cached — thread-safe initialization)
     global _loaded_closed, _loaded_personal
     data_dir = Path(__file__).parent.parent / "data"
-    if _loaded_closed is None:
-        _loaded_closed = load_closed_places(data_dir)
-    if _loaded_personal is None:
-        _loaded_personal = load_personal_exclusions(data_dir)
+    with _EXCLUSION_LOCK:
+        if _loaded_closed is None:
+            _loaded_closed = load_closed_places(data_dir)
+        if _loaded_personal is None:
+            _loaded_personal = load_personal_exclusions(data_dir)
 
     # Step 1: Filter by type
     filtered = filter_by_type(all_places, place_type)
@@ -335,13 +333,17 @@ def recommend(
 
     # Step 7: Deduplicate franchises (same name) — keep closest to user
     if candidates:
+        from utils.haversine import haversine_distance, compute_walk_distance
         seen: dict[str, Place] = {}
         for p in candidates:
-            key = _normalize_name(p.name)
+            # Ensure distance is computed for dedup comparison
+            if getattr(p, "distance_walk_m", 0) == 0 and (area_lat != 0 or area_lng != 0) and (p.lat != 0 or p.lng != 0):
+                d = haversine_distance(area_lat, area_lng, p.lat, p.lng)
+                p.distance_walk_m = compute_walk_distance(d)
+            key = normalize_name(p.name)
             if key not in seen:
                 seen[key] = p
             else:
-                # Keep the one closer to the user
                 existing = seen[key]
                 if (p.distance_walk_m or 99999) < (existing.distance_walk_m or 99999):
                     seen[key] = p
@@ -368,8 +370,10 @@ def recommend(
         # Random selection
         result.places = random.sample(candidates, min(num_results, len(candidates)))
 
-    # Sort by rating for display
-    result.places.sort(key=lambda p: p.google_rating, reverse=True)
+    # Keep taste-driven ordering from score_and_rank_places; do not re-sort by raw rating
+    # (Only sort by rating when taste scoring is off for deterministic display)
+    if not use_taste_scoring:
+        result.places.sort(key=lambda p: p.google_rating, reverse=True)
 
     # Step 9: Lazy-resolve Google ratings for surfaced venues (background)
     try:

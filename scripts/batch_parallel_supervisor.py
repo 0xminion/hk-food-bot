@@ -3,7 +3,7 @@
 Parallel batch supervisor — runs 2 workers with isolated caches, merges on completion.
 Auto-restarts on crash/hang. Monitors via log + status file.
 """
-import csv, json, subprocess, sys, time, os, signal
+import csv, json, subprocess, sys, time, os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -53,7 +53,7 @@ def count_cache(path) -> int:
     try:
         with open(path) as f:
             return len(json.load(f))
-    except:
+    except (OSError, ValueError, json.JSONDecodeError):
         return 0
 
 
@@ -64,7 +64,7 @@ def count_remaining(csv_path: str, cache_path: str) -> int:
             cache = json.load(f)
     with open(csv_path, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-    return sum(1 for r in rows if f"{r['name'].strip()}|{r['address'].strip()}" not in cache)
+    return sum(1 for r in rows if f"{r.get('name','').strip()}|{r.get('address','').strip()}" not in cache)
 
 
 def run_worker(worker: dict) -> bool:

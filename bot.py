@@ -177,8 +177,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "🇭🇰 <b>HK Food & Drinks Bot</b>\n\n"
         "Looking for somewhere great to eat or drink?\n\n"
-        "/eat?  — find a restaurant\n"
-        "/drink? — find a bar\n"
+        "/eat  — find a restaurant\n"
+        "/drink — find a bar\n"
         "/cancel — cancel current flow",
         parse_mode="HTML",
     )
