@@ -5,7 +5,6 @@ from engine.taste import (
     score_place,
     score_and_rank_places,
     get_top_cuisines,
-    USER_TASTE_PROFILE,
 )
 from data.loader import Place
 

@@ -1,61 +1,56 @@
 """
 Taste profile scorer.
 
-Scores places based on how well they match the user's known preferences
-derived from their Google Maps saved list analysis.
+Scores places based on how well they match the user's taste profile.
+Weights are loaded from config.yaml so they can be customized without editing code.
 """
 
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# User's taste profile from Google Maps "minion abc" list analysis
-USER_TASTE_PROFILE: dict[str, float] = {
-    "italian": 1.0,
-    "chinese": 1.0,
-    "cantonese": 0.85,
-    "cocktail-bar": 0.95,
-    "japanese": 0.8,
-    "thai": 0.75,
-    "spanish": 0.7,
-    "western": 0.65,
-    "ramen": 0.65,
-    "hotpot": 0.55,
-    # Crossover weights — cuisines similar to favorites
-    "french": 0.6,
-    "bakery": 0.45,
-    "dessert": 0.4,
-    "vietnamese": 0.55,
-    "korean": 0.5,
-    "fusion": 0.5,
-    "seafood": 0.45,
-    "steakhouse": 0.45,
-    "noodles": 0.5,
-    "dim-sum": 0.5,
-    "bbq": 0.4,
-    "wine-bar": 0.6,
-    "craft-beer": 0.4,
-    "speakeasy": 0.7,
-    "lounge": 0.5,
-    "pub": 0.3,
-    "dive-bar": 0.35,
-    "rooftop-bar": 0.55,
-    "cafe": 0.3,
-    "greek": 0.4,
-    "indian": 0.4,
-    "mexican": 0.35,
-    "turkish": 0.35,
-    "middle-eastern": 0.35,
-    "portuguese": 0.4,
-    "sichuan": 0.55,
-    "malay": 0.4,
-    "indonesian": 0.35,
-    "filipino": 0.3,
-}
+# ---------------------------------------------------------------------------
+# Load taste profile from config.yaml (so users can customize without editing code)
+# ---------------------------------------------------------------------------
 
-# Default weight for unknown cuisines
-DEFAULT_CUISINE_WEIGHT = 0.2
+def _load_taste_profile() -> tuple[dict[str, float], float]:
+    """Load taste profile weights from config.yaml.
+
+    Returns (profile dict, default weight). Falls back to an empty profile
+    if config.yaml is missing or the taste_profile section is absent.
+    """
+    config_path = Path(__file__).parent.parent / "config.yaml"
+    if not config_path.exists():
+        logger.warning("config.yaml not found; using empty taste profile")
+        return {}, 0.2
+
+    try:
+        import yaml
+        with open(config_path, encoding="utf-8") as f:
+            cfg = yaml.safe_load(f) or {}
+    except Exception as exc:
+        logger.warning("Failed to parse config.yaml: %s; using empty taste profile", exc)
+        return {}, 0.2
+
+    taste_cfg = cfg.get("taste_profile", {})
+    default_weight = float(taste_cfg.pop("default_weight", 0.2)) if isinstance(taste_cfg, dict) else 0.2
+
+    if not isinstance(taste_cfg, dict):
+        return {}, default_weight
+
+    # Filter out only numeric weights (ignore comments or nested structures)
+    profile: dict[str, float] = {}
+    for key, value in taste_cfg.items():
+        if isinstance(value, (int, float)):
+            profile[key.lower().strip()] = float(value)
+
+    return profile, default_weight
+
+
+# Module-level cache: loaded once at import time
+_USER_TASTE_PROFILE, _DEFAULT_CUISINE_WEIGHT = _load_taste_profile()
 
 
 @dataclass
@@ -75,7 +70,7 @@ class ScoredPlace:
 def get_cuisine_weight(cuisine_tag: str) -> float:
     """Get the taste weight for a specific cuisine tag."""
     tag = cuisine_tag.lower().strip()
-    return USER_TASTE_PROFILE.get(tag, DEFAULT_CUISINE_WEIGHT)
+    return _USER_TASTE_PROFILE.get(tag, _DEFAULT_CUISINE_WEIGHT)
 
 
 def score_place(place) -> float:
@@ -83,11 +78,11 @@ def score_place(place) -> float:
     Score a place based on how well its cuisine tags match the user's taste profile.
 
     Takes the max weight across all cuisine tags (a Thai-Italian fusion place
-    gets the max of Thai=0.75 and Italian=1.0 → 1.0). Falls back to
-    DEFAULT_CUISINE_WEIGHT for unknown cuisines.
+    gets the max of Thai=0.75 and Italian=1.0 → 1.0). Falls back to the
+    configured default weight for unknown cuisines.
     """
     if not place.cuisine_tags:
-        return DEFAULT_CUISINE_WEIGHT
+        return _DEFAULT_CUISINE_WEIGHT
 
     weights = [get_cuisine_weight(tag) for tag in place.cuisine_tags]
     # Use max — if any tag matches a favorite cuisine, the place scores high
@@ -152,5 +147,5 @@ def score_and_rank_places(places: list, data_dir=None) -> list[ScoredPlace]:
 
 def get_top_cuisines(limit: int = 10) -> list[tuple[str, float]]:
     """Return the top N cuisines from the user's taste profile, sorted by weight."""
-    sorted_cuisines = sorted(USER_TASTE_PROFILE.items(), key=lambda x: x[1], reverse=True)
+    sorted_cuisines = sorted(_USER_TASTE_PROFILE.items(), key=lambda x: x[1], reverse=True)
     return sorted_cuisines[:limit]

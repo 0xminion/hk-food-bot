@@ -22,18 +22,53 @@ time_filter:
   enabled: true
   timezone: "Asia/Hong_Kong"
 
-# Taste profile (from Google Maps "minion abc" list analysis)
+# Taste profile — personalize recommendation scoring
+# Cuisines and styles are weighted 0.0-1.0 (higher = more preferred)
+# Edit these weights to match your own preferences.
 taste_profile:
-  # Cuisines are weighted 0.0-1.0 based on user's saved list frequency
-  # See engine/taste.py for full profile
-  top_cuisines:
-    - italian
-    - chinese
-    - cocktail-bar
-    - japanese
-    - cantonese
-    - thai
-    - spanish
-    - western
-    - ramen
-    - hotpot
+  # Core cuisine preferences
+  italian: 1.0
+  chinese: 1.0
+  cantonese: 0.85
+  cocktail-bar: 0.95
+  japanese: 0.8
+  thai: 0.75
+  spanish: 0.7
+  western: 0.65
+  ramen: 0.65
+  hotpot: 0.55
+  # Crossover / similar cuisines
+  french: 0.6
+  bakery: 0.45
+  dessert: 0.4
+  vietnamese: 0.55
+  korean: 0.5
+  fusion: 0.5
+  seafood: 0.45
+  steakhouse: 0.45
+  noodles: 0.5
+  dim-sum: 0.5
+  bbq: 0.4
+  sichuan: 0.55
+  malay: 0.4
+  indonesian: 0.35
+  filipino: 0.3
+  # Bar / style preferences
+  wine-bar: 0.6
+  craft-beer: 0.4
+  speakeasy: 0.7
+  lounge: 0.5
+  pub: 0.3
+  dive-bar: 0.35
+  rooftop-bar: 0.55
+  cafe: 0.3
+  # International
+  greek: 0.4
+  indian: 0.4
+  mexican: 0.35
+  turkish: 0.35
+  middle-eastern: 0.35
+  portuguese: 0.4
+
+  # Default weight for any cuisine not listed above
+  default_weight: 0.2

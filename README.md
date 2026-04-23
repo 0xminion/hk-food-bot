@@ -19,20 +19,7 @@ A Telegram bot that recommends restaurants and bars in Hong Kong based on your p
 
 ## Your Taste Profile
 
-The bot uses your taste profile from your Google Maps "minion abc" list to personalize recommendations. Cuisines are scored by weight — Italian and Chinese rank highest, followed by cocktail bars, Japanese, and Thai. The cuisine picker automatically sorts options by your preference.
-
-| Cuisine | Weight | Saved Places |
-|---------|--------|-------------|
-| Italian | 1.00 | 13 |
-| Chinese | 1.00 | 13 |
-| Cocktail Bars | 0.95 | 10 |
-| Japanese | 0.80 | 8 |
-| Cantonese | 0.85 | 6 |
-| Thai | 0.75 | 6 |
-| Spanish | 0.70 | 5 |
-| Western | 0.65 | 5 |
-| Ramen | 0.65 | 5 |
-| Hotpot | 0.55 | 4 |
+The bot uses a configurable taste profile to personalize recommendations. Cuisines and bar styles are weighted from `0.0` to `1.0` — higher values mean the bot will prioritize those places. Edit `config.yaml` under the `taste_profile` section to match your own preferences; no code changes are required.
 
 ## Setup
 
@@ -40,13 +27,29 @@ The bot uses your taste profile from your Google Maps "minion abc" list to perso
 
 Talk to @BotFather on Telegram. Create a new bot and copy the API token.
 
-### 2. Create your local secrets file
+### 2. Clone the repo and create a virtual environment
+
+```bash
+git clone https://github.com/0xminion/hk-food-bot.git
+cd hk-food-bot
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -e .
+```
+
+If you prefer `requirements.txt`:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Create your local secrets file
 
 Create a file named `.env` in the repo root:
 
 ```bash
 TELEGRAM_BOT_TOKEN=***
-TELEGRAM_USER_ID=315164592
+TELEGRAM_USER_ID=your_telegram_user_id
 ```
 
 Important:
@@ -54,9 +57,9 @@ Important:
 - do not commit it
 - this repo already ignores `.env`
 
-### 3. Configure bot behavior
+### 4. Configure bot behavior
 
-Edit `config.yaml` for non-secret settings only:
+Edit `config.yaml` for non-secret settings:
 
 ```yaml
 telegram:
@@ -73,12 +76,12 @@ defaults:
 time_filter:
   enabled: true
   timezone: "Asia/Hong_Kong"
-```
 
-### 4. Install Dependencies
-
-```bash
-pip install -r requirements.txt
+# Personalize your recommendation weights
+taste_profile:
+  italian: 1.0
+  japanese: 0.8
+  # ... add or remove cuisines as you like
 ```
 
 ### 5. Run
@@ -145,6 +148,8 @@ hk-food-bot/
     ├── refresh_data.py        # Automated data refresh pipeline
     └── batch_*.py             # Batch Google Maps scraping scripts
 ```
+
+> **Note:** The `scripts/` directory contains ad-hoc data maintenance tools (scrapers, migration helpers, batch resolvers). You only need them if you are refreshing or rebuilding the venue dataset; they are not required to run the bot.
 
 ## Recommendation Pipeline
 
@@ -275,13 +280,38 @@ defaults:
 time_filter:
   enabled: true
   timezone: "Asia/Hong_Kong"
+
+# Personalize recommendation weights (0.0 - 1.0)
+taste_profile:
+  italian: 1.0
+  japanese: 0.8
+  thai: 0.75
+  # ... see config.yaml for the full list
 ```
 
 ## Dependencies
 
+Core runtime dependencies (see `pyproject.toml`):
+
 - `python-telegram-bot[ext]` >= 21.0 (async Telegram bot framework)
 - `PyYAML` >= 6.0 (config parsing)
-- `pytest` (testing)
+
+Development / testing:
+
+- `pytest` >= 7.0
+- `pytest-asyncio` >= 0.21
+
+Install everything including dev dependencies:
+
+```bash
+pip install -e ".[dev]"
+```
+
+Or use the classic `requirements.txt` if you prefer:
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Roadmap
 
