@@ -167,6 +167,28 @@ When the user reports missing results or wrong data, trace the FULL pipeline:
 - Check tag sources (OpenRice cuisine vs Google Maps cocktail-bar tags)
 - Check filter function (filter_by_cuisine vs filter_by_any_tag for bars)
 
+## Booking Platform Anti-Bot Blocks (TableCheck)
+
+**The finding:** TableCheck (Mizunara, many HK bars/restaurants) is actively hostile to automation. Even Camoufox (anti-detect browser) hits a **403 Forbidden** on the booking widget endpoint. Server-side IP/region gate that no client-side fingerprint can bypass.
+
+**What was tried and failed:**
+- `browser_navigate` (built-in) → timeout
+- `curl` user-agent spoof → 403
+- `camoufox` with Firefox fingerprint → 403
+- `playwright` headless → 403
+
+**What works instead:**
+- The venue's **own website** (typically Shopify) loads fine → scrape for phone/WhatsApp
+- `tel:` links are reliably present in the Shopify site's `<a href="tel:...">` tags
+- **Phone call** is the fastest fallback for same-day reservations
+
+**HK booking platform landscape:**
+- **TableCheck** — 403 to automation. Japan/Asia heavy. No WhatsApp, phone only.
+- **OpenRice** — loads, but doesn't show live availability (reviews+info only)
+- **Chope** / **Quandoo** — not yet tested, likely similar protections
+
+**Practical rule:** For same-day table queries, always try phone/WhatsApp first. Online booking widgets are a black box for automation and often return 403. The venue website is the reliable scraping target — look for `tel:` and `wa.me` links.
+
 ## Time Filter Pitfall — Pre-Dinner False Negatives
 
 **The problem:** At 5:00–6:30 PM, the bot's time filter often excludes restaurants that are actually open for dinner. OpenRice data frequently only lists lunch hours (e.g., "Mo-Su 11:30-15:00") even when the venue serves dinner from 5:30 or 6:00 PM. This causes valid dinner options to disappear from results.
