@@ -17,6 +17,11 @@ def test_area_scope_neighbor_map_is_direct_and_consistent():
     assert AREA_SCOPE_NEIGHBORS["Kennedy Town"] == ["Kennedy Town", "Sai Ying Pun"]
     assert AREA_SCOPE_NEIGHBORS["TST"] == ["TST", "Jordan", "Yau Ma Tei"]
     assert AREA_SCOPE_NEIGHBORS["Mong Kok"] == ["Mong Kok", "Yau Ma Tei", "Prince Edward"]
+    # Extended neighborhoods for UI consistency
+    assert AREA_SCOPE_NEIGHBORS["North Point"] == ["North Point", "Tin Hau"]
+    assert AREA_SCOPE_NEIGHBORS["Jordan"] == ["Jordan", "TST", "Yau Ma Tei"]
+    assert AREA_SCOPE_NEIGHBORS["Yau Ma Tei"] == ["Yau Ma Tei", "Jordan", "TST", "Mong Kok", "Prince Edward"]
+    assert AREA_SCOPE_NEIGHBORS["Prince Edward"] == ["Prince Edward", "Mong Kok", "Yau Ma Tei"]
 
 
 @pytest.mark.parametrize(

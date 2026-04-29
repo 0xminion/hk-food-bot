@@ -1,6 +1,7 @@
 ---
 name: hk-food-and-drinks-recommendation
 description: Structured output format for HK Food Bot restaurant and bar recommendations.
+version: 0.1.1
 ---
 
 # HK Food Bot — Recommendation Output Format

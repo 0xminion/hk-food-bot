@@ -4,8 +4,9 @@ A Telegram bot that recommends restaurants and bars in Hong Kong based on your p
 
 ## Features
 
-- `/eat?` — Restaurant recommendations by area, budget, and cuisine
-- `/drink?` — Bar recommendations by area, budget, and drink type
+- `/eat` — Restaurant recommendations by area, budget, and cuisine
+- `/drink` — Bar recommendations by area, budget, and drink type
+- `/find` — Natural language search (e.g. "spicy Italian in Wan Chai")
 - **Budget filtering** — filter by price range ($, $$, $$$, $$$$)
 - **Taste profile scoring** — weights recommendations toward your favorites
 - Area-based filtering (10 HK districts: Central, Wan Chai, TST, etc.)

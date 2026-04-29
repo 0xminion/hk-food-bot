@@ -2,6 +2,7 @@
 name: hk-food-bot
 description: HK Food & Drink recommender — natural language food recommendations from 13,689 venues in Hong Kong. Covers restaurants, bars, cafes with Google Maps + OpenRice ratings.
 category: leisure
+version: 0.1.1
 ---
 
 # HK Food Bot Skill
