@@ -72,3 +72,15 @@ taste_profile:
 
   # Default weight for any cuisine not listed above
   default_weight: 0.2
+
+embedding:
+  ollama_url: "http://localhost:11434/api/embed"
+  model: "qwen3-embedding:0.6b"
+  dim: 1024
+  batch_size: 32
+
+conversational:
+  ollama_url: "http://localhost:11434/api/generate"
+  model: "gemma4:31b-cloud"
+  max_tokens: 512
+  temperature: 0.3

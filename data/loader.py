@@ -42,6 +42,8 @@ class Place:
     source: str = ""
     distance_walk_m: int = 0
     distance_drive_m: int = 0
+    semantic_score: float = 0.0
+    taste_score: float = 0.0
 
 
 def _parse_tags(raw: str) -> list[str]:

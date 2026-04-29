@@ -284,6 +284,45 @@ def main() -> None:
     app.add_handler(eat_handler)
     app.add_handler(drink_handler)
 
+    # New conversational entry: /find or freeform text starting with keywords
+    async def find_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle /find command — parse natural language and return recommendations."""
+        text = update.message.text.replace("/find", "").strip()
+        if not text:
+            await update.message.reply_text(
+                "What are you looking for? Try:\n"
+                "• /find spicy Italian in Wan Chai\n"
+                "• /find dinner + cocktails in Central\n"
+                "• /find somewhere new for Japanese"
+            )
+            return
+        await _handle_conversational(update, context, text)
+
+    async def _handle_conversational(update, context, text):
+        from handlers.conversational import ConversationEngine
+        from handlers.common import format_recommendations_message, format_night_out_message
+        all_places = context.bot_data.get("_cached_places", [])
+        engine = ConversationEngine(context.bot_data.get("config"))
+        result = engine.process(text, all_places)
+        if result["type"] == "night_out":
+            msg = format_night_out_message(
+                result["itineraries"],
+                result["parsed"].area or "Hong Kong",
+                result["parsed"].budget,
+            )
+        else:
+            parsed = result["parsed"]
+            msg = format_recommendations_message(
+                places=result["places"],
+                area_name=parsed.area or "Hong Kong",
+                place_type=parsed.place_type or "restaurant",
+                crossover=result.get("crossover", ""),
+                expanded=result.get("expanded", False),
+            )
+        await update.message.reply_text(msg, parse_mode="HTML", disable_web_page_preview=True)
+
+    app.add_handler(CommandHandler("find", find_command))
+
     logger.info("Starting HK Food Bot...")
     app.run_polling(drop_pending_updates=True)
 

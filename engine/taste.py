@@ -117,6 +117,7 @@ def score_and_rank_places(places: list, data_dir=None) -> list[ScoredPlace]:
     scored = []
     for place in places:
         taste = score_place(place)
+        place.taste_score = taste  # Persist for downstream consumers
         gem_bonus = 0.15 if place.is_secret_gem else 0.0
 
         # Award bonus: 0-1.0 normalized range

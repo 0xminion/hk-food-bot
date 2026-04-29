@@ -183,11 +183,54 @@ def main():
     parser.add_argument("--count", type=int, default=5, help="Number of recommendations")
     parser.add_argument("--no-time-filter", action="store_true", help="Skip open-now filtering")
     parser.add_argument("--include-personal", action="store_true", help="Include personal exclusion list (minion abc)")
-    parser.add_argument("--query", type=str, help="Freeform query for cuisine resolution (e.g. 'spicy ramen near Causeway Bay')")
+    parser.add_argument("--find", dest="find_query", type=str, help="Natural language query (e.g. 'spicy Italian in Wan Chai, open now')")
+    parser.add_argument("--night-out", action="store_true", help="Plan a dinner + bar itinerary")
     parser.add_argument("--data-dir", type=str, help="Override data directory path")
     parser.add_argument("--all-areas", action="store_true", help="Search all areas (no distance filter)")
 
     args = parser.parse_args()
+
+    # Handle --find conversational query
+    if args.find_query:
+        from handlers.conversational import ConversationEngine
+        cfg = {"conversational": {"ollama_url": "http://localhost:11434", "model": "gemma4:31b-cloud", "max_tokens": 512, "temperature": 0.3}}
+        engine = ConversationEngine(cfg)
+        data_dir = Path(args.data_dir) if args.data_dir else Path(__file__).parent.parent / "data"
+        all_places = load_places(data_dir / "merged_places.csv")
+        result = engine.process(args.find_query, all_places)
+        if result["type"] == "night_out":
+            from handlers.common import format_night_out_message
+            print(format_night_out_message(result["itineraries"], result["parsed"].area or "Hong Kong"))
+        else:
+            from handlers.common import format_recommendations_message
+            print(format_recommendations_message(
+                result["places"], result["parsed"].area or "Hong Kong",
+                result["parsed"].place_type or "restaurant"
+            ))
+        return
+
+    # Handle --night-out
+    if args.night_out:
+        from engine.night_out import plan_night_out
+        data_dir = Path(args.data_dir) if args.data_dir else Path(__file__).parent.parent / "data"
+        csv_path = data_dir / "merged_places.csv"
+        if not csv_path.exists():
+            print(json.dumps({"error": f"Data file not found: {csv_path}"}))
+            sys.exit(1)
+        all_places = load_places(csv_path)
+        lat, lng = ALL_AREAS["Central"]
+        area_name = args.area or "Central"
+        if area_name in ALL_AREAS:
+            lat, lng = ALL_AREAS[area_name]
+        itineraries = plan_night_out(
+            all_places=all_places, area_lat=lat, area_lng=lng,
+            area_name=area_name,
+            cuisine=resolve_cuisine(args.cuisine),
+            num_itineraries=args.count,
+        )
+        from handlers.common import format_night_out_message
+        print(format_night_out_message(itineraries.itineraries if hasattr(itineraries, "itineraries") else itineraries, area_name))
+        return
 
     # Resolve coordinates
     lat, lng = None, None
@@ -203,7 +246,6 @@ def main():
             print(json.dumps({"error": f"Unknown area: {args.area}. Known areas: {', '.join(sorted(ALL_AREAS.keys()))}"}))
             sys.exit(1)
     else:
-        # Default: Central
         lat, lng = ALL_AREAS["Central"]
         area_name = "Central"
 
@@ -213,13 +255,9 @@ def main():
         cuisine = "surprise"
     elif args.cuisine:
         cuisine = resolve_cuisine(args.cuisine)
-    elif args.query:
-        cuisine = resolve_cuisine(args.query)
 
-    # Map type
     place_type = "bar" if args.type == "drink" else "restaurant"
 
-    # Load data
     data_dir = Path(args.data_dir) if args.data_dir else Path(__file__).parent.parent / "data"
     csv_path = data_dir / "merged_places.csv"
     if not csv_path.exists():
@@ -231,7 +269,6 @@ def main():
         print(json.dumps({"error": "No places loaded from data file"}))
         sys.exit(1)
 
-    # Run recommendation
     max_distance = 25000 if args.all_areas else 1500
     result: RecommendationResult = recommend(
         all_places=all_places,
@@ -246,7 +283,6 @@ def main():
         skip_personal_exclusions=args.include_personal,
     )
 
-    # Format output
     output = {
         "query": {
             "area": area_name,

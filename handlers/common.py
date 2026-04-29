@@ -206,7 +206,59 @@ def format_recommendation(place: Place, idx: int) -> str:
     else:
         lines.append("   🎟 Walk-in, no booking needed")
 
+    # Rationale (from conversational mode)
+    if getattr(place, "rationale", None):
+        lines.append(f"   💬 <i>{place.rationale}</i>")
+
     return "\n".join(lines)
+
+
+def format_night_out_message(itineraries: list, area_name: str, budget: str | None = None) -> str:
+    """Format night-out itineraries for Telegram."""
+    header = f"🌃 <b>Night out in {area_name}</b>"
+    if budget:
+        header += f" · {budget}"
+    header += "\n\n"
+
+    if not itineraries:
+        return header + "😅 No matching dinner + bar combos found. Try a different area or budget."
+
+    blocks = []
+    for idx, it in enumerate(itineraries, 1):
+        d, b = it.dinner, it.bar
+        block = f"<b>Option {idx}</b>\n"
+        # Dinner
+        block += f"🍽 <b>{d.name}</b>"
+        if d.google_rating > 0:
+            block += f"  ⭐ {d.google_rating}"
+        if d.or_rating > 0:
+            block += f"  ⭐ {round(d.or_rating, 2)} (OR)"
+        block += f"\n   📍 <a href=\"{build_google_maps_url(d)}\">Google Maps</a>\n"
+        if d.cuisine_tags:
+            block += f"   🍜 {', '.join(d.cuisine_tags)}\n"
+        if getattr(d, "is_secret_gem", False):
+            block += "   💎 Secret gem\n"
+
+        # Arrow
+        walk_min = max(1, it.walk_m // 80)
+        block += f"   ↓ 🚶 {walk_min} min walk ({it.walk_m}m)\n"
+
+        # Bar
+        block += f"🍸 <b>{b.name}</b>"
+        if b.google_rating > 0:
+            block += f"  ⭐ {b.google_rating}"
+        if b.or_rating > 0:
+            block += f"  ⭐ {round(b.or_rating, 2)} (OR)"
+        block += f"\n   📍 <a href=\"{build_google_maps_url(b)}\">Google Maps</a>\n"
+        if b.style_tags:
+            block += f"   🏷 {', '.join(b.style_tags)}\n"
+        if getattr(b, "is_secret_gem", False):
+            block += "   💎 Secret gem\n"
+
+        block += f"\n   <i>{it.rationale}</i>"
+        blocks.append(block)
+
+    return header + "\n\n".join(blocks)
 
 
 def format_recommendations_message(

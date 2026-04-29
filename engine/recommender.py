@@ -167,6 +167,8 @@ def recommend(
     num_results: int = 5,
     use_time_filter: bool = True,
     use_taste_scoring: bool = True,
+    use_semantic_boost: bool = False,
+    semantic_query: str = "",
     area_name: str | None = None,
     max_distance_m: int = 25000,
     allow_expansion: bool = False,
@@ -175,23 +177,9 @@ def recommend(
     price_filter: str | None = None,
 ) -> RecommendationResult:
     """
-    Main recommendation pipeline.
-
-    Args:
-        all_places: Full dataset of places
-        place_type: 'restaurant' or 'bar'
-        area_lat: User's area latitude
-        area_lng: User's area longitude
-        cuisine: Selected cuisine tag (None for surprise me)
-        num_results: Number of recommendations to return
-        use_time_filter: Whether to filter by opening hours
-        use_taste_scoring: Whether to apply taste profile scoring
-
-    Returns:
-        RecommendationResult with places and metadata
-    """
+    Main recommendation pipeline."""
     result = RecommendationResult()
-    num_results = max(1, min(num_results, 50))  # Clamp between 1 and 50
+    num_results = max(1, min(num_results, 50))
 
     # Load exclusion lists (cached — thread-safe initialization)
     global _loaded_closed, _loaded_personal
@@ -356,7 +344,25 @@ def recommend(
         candidates = _filter_bottom_percentile(candidates, percentile=20)
         logger.info(f"Step 8 - Bottom 20% filter: {before - len(candidates)} removed")
 
-    # Step 9: Score and rank
+    # Step 9: Semantic boost (if enabled)
+    if use_semantic_boost and semantic_query and candidates:
+        try:
+            from engine.semantic_filter import SemanticFilter
+
+            sem = SemanticFilter(
+                data_dir=Path(__file__).parent.parent / "data",
+                ollama_url="http://localhost:11434",
+                model="qwen3-embedding:0.6b",
+                dim=1024,
+            )
+            candidates = sem.boost_candidates(candidates, semantic_query, boost_weight=0.25)
+            logger.info(f"Step 9 - Semantic boost applied: {len(candidates)} re-ranked")
+        except FileNotFoundError:
+            logger.debug("Embeddings not yet built, skipping semantic boost")
+        except Exception:
+            logger.warning("Semantic boost failed, continuing without", exc_info=True)
+
+    # Step 10: Score and rank
     if not candidates:
         logger.warning("No candidates found for recommendation")
         return result
