@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hk-food-bot"
-version = "0.1.0"
+version = "0.1.1"
 description = "Telegram bot for restaurant and bar recommendations in Hong Kong"
 readme = "README.md"
 license = {text = "MIT"}
@@ -34,7 +34,12 @@ dependencies = [
 dev = [
     "pytest>=7.0,<9.0",
     "pytest-asyncio>=0.21,<1.0",
+    "ruff>=0.1.0",
 ]
 
 [project.scripts]
 hk-food-bot = "bot:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bot"]
+only-include = ["bot.py", "handlers", "engine", "data", "scrapers", "utils"]
