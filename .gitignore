@@ -13,3 +13,10 @@ data/_cache_*.json
 data/_resolve_*.csv
 data/_uncached_*.csv
 data/*.bak*
+# Data artifacts
+data/google_ratings_cache.json
+data/awards.json
+data/venue_embeddings.npy
+data/venue_index.json
+# Ollama embedding cache
+data/*_embeddings.npy

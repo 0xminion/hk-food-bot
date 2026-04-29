@@ -43,6 +43,10 @@ AREA_SCOPE_NEIGHBORS = {
     "Kennedy Town": ["Kennedy Town", "Sai Ying Pun"],
     "TST": ["TST", "Jordan", "Yau Ma Tei"],
     "Mong Kok": ["Mong Kok", "Yau Ma Tei", "Prince Edward"],
+    "North Point": ["North Point", "Tin Hau"],
+    "Jordan": ["Jordan", "TST", "Yau Ma Tei"],
+    "Yau Ma Tei": ["Yau Ma Tei", "Jordan", "TST", "Mong Kok", "Prince Edward"],
+    "Prince Edward": ["Prince Edward", "Mong Kok", "Yau Ma Tei"],
 }
 
 BAR_SPOT_TYPES = [
@@ -349,11 +353,13 @@ def recommend(
         try:
             from engine.semantic_filter import SemanticFilter
 
+            # Load embedding config from bot config (fallback to defaults)
+            sem_cfg = config.get("embedding", {})
             sem = SemanticFilter(
                 data_dir=Path(__file__).parent.parent / "data",
-                ollama_url="http://localhost:11434",
-                model="qwen3-embedding:0.6b",
-                dim=1024,
+                ollama_url=sem_cfg.get("ollama_url", "http://localhost:11434"),
+                model=sem_cfg.get("model", "qwen3-embedding:0.6b"),
+                dim=sem_cfg.get("dim", 1024),
             )
             candidates = sem.boost_candidates(candidates, semantic_query, boost_weight=0.25)
             logger.info(f"Step 9 - Semantic boost applied: {len(candidates)} re-ranked")

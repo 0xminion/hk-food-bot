@@ -195,6 +195,7 @@ def plan_night_out(
     budget: str | None = None,
     num_itineraries: int = 3,
     max_walk_m: int = 800,
+    dinner_cuisine: str | None = None,
 ) -> NightOutPlan:
     """
     Plan a multi-venue night out: dinner + bar.
@@ -209,18 +210,19 @@ def plan_night_out(
         max_walk_m: max dinner-to-bar walk distance
     """
     # Step 1: Get dinner candidates
+    dinner_cuisine_actual: str | None = dinner_cuisine if dinner_cuisine is not None else cuisine
     dinner_result: RecommendationResult = recommend(
         all_places=all_places,
         place_type="restaurant",
         area_lat=area_lat,
         area_lng=area_lng,
-        cuisine=cuisine,
+        cuisine=dinner_cuisine_actual,
         num_results=20,
         area_name=area_name,
         max_distance_m=1500,
         price_filter=budget,
-        use_semantic_boost=bool(cuisine),
-        semantic_query=cuisine or "",
+        use_semantic_boost=bool(dinner_cuisine_actual),
+        semantic_query=dinner_cuisine_actual or "",
     )
     dinners = dinner_result.places
     if not dinners:

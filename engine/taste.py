@@ -35,10 +35,11 @@ def _load_taste_profile() -> tuple[dict[str, float], float]:
         return {}, 0.2
 
     taste_cfg = cfg.get("taste_profile", {})
-    default_weight = float(taste_cfg.pop("default_weight", 0.2)) if isinstance(taste_cfg, dict) else 0.2
-
     if not isinstance(taste_cfg, dict):
-        return {}, default_weight
+        return {}, 0.2
+    # Copy so we don't mutate the original config dict
+    taste_cfg = dict(taste_cfg)
+    default_weight = float(taste_cfg.pop("default_weight", 0.2))
 
     # Filter out only numeric weights (ignore comments or nested structures)
     profile: dict[str, float] = {}

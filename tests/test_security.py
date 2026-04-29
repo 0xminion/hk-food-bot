@@ -196,20 +196,20 @@ def test_recommend_num_results_negative():
 def test_bot_token_validation_short():
     """Tokens shorter than 10 chars should be rejected."""
     token = "abc123"
-    assert len(token) < 10
+    # Validate the same logic as bot.py main()
+    assert not token or len(token) < 10 or ":" not in token
 
 
 def test_bot_token_validation_no_colon():
     """Tokens without ':' should be rejected (Telegram bot tokens have format id:hash)."""
     token = "a" * 20  # Long enough but no colon
-    assert ":" not in token
+    assert not token or len(token) < 10 or ":" not in token
 
 
 def test_bot_token_validation_valid():
     """Valid Telegram bot tokens have format digits:alphanumeric."""
     token = "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
-    assert len(token) >= 10
-    assert ":" in token
+    assert len(token) >= 10 and ":" in token
 
 
 # ---------------------------------------------------------------------------
