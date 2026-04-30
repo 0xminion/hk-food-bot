@@ -1,0 +1,40 @@
+Scanning ....
+[scan] git ls-files: 78 total, 75 kept, 3 dropped (ext:3, meta:0, big:0)
+[build_project_map] 75 files, 12 unique dirs, 10 cache misses, 0.9ms
+[resolve] 96 resolved, 275 unresolved (of 371 total specs)
+[resolve_imports] project_map 1.1ms, suffix_idx 0.4ms, suffix_resolve 3.9ms, total 5.4ms
+[build_graphs] 75 files | maps 0.4ms, imports 5.5ms, calls+inherit 2.5ms, total 8.4ms | 96 import, 394 call, 0 inherit edges
+sentrux check — 10 rules checked
+
+Quality: 6078
+
+✗ [Error] max_cc: 3 function(s) exceed max cyclomatic complexity of 30
+    engine/recommender.py:recommend (cc=60)
+    scripts/merge_data.py:main (cc=45)
+    data/loader.py:load_places (cc=38)
+✗ [Error] layer_direction: Layer violation: engine/recommender.py (engine) imports handlers/common.py (handlers). engine must not depend on handlers.
+    engine/recommender.py
+    handlers/common.py
+✗ [Error] layer_direction: Layer violation: scripts/build_embeddings.py (scripts) imports engine/embeddings.py (engine). scripts must not depend on engine.
+    scripts/build_embeddings.py
+    engine/embeddings.py
+✗ [Error] layer_direction: Layer violation: scripts/recommend.py (scripts) imports engine/cuisine_groups.py (engine). scripts must not depend on engine.
+    scripts/recommend.py
+    engine/cuisine_groups.py
+✗ [Error] layer_direction: Layer violation: scripts/recommend.py (scripts) imports engine/night_out.py (engine). scripts must not depend on engine.
+    scripts/recommend.py
+    engine/night_out.py
+✗ [Error] layer_direction: Layer violation: scripts/recommend.py (scripts) imports engine/recommender.py (engine). scripts must not depend on engine.
+    scripts/recommend.py
+    engine/recommender.py
+✗ [Error] layer_direction: Layer violation: scripts/recommend.py (scripts) imports engine/time_aware.py (engine). scripts must not depend on engine.
+    scripts/recommend.py
+    engine/time_aware.py
+✗ [Error] layer_direction: Layer violation: scripts/recommend.py (scripts) imports handlers/common.py (handlers). scripts must not depend on handlers.
+    scripts/recommend.py
+    handlers/common.py
+✗ [Error] layer_direction: Layer violation: scripts/recommend.py (scripts) imports handlers/conversational.py (handlers). scripts must not depend on handlers.
+    scripts/recommend.py
+    handlers/conversational.py
+
+✗ 9 violation(s) found

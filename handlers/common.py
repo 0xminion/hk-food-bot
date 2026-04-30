@@ -7,25 +7,13 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton,
 
 from data.loader import Place
 from engine.time_aware import get_open_status_label
+from utils.constants import HK_AREAS  # re-export for backwards compat
+from engine.price import price_matches, _parse_price_tier  # re-export for backwards compat
 
 logger = logging.getLogger(__name__)
 
 # Conversation states shared across handlers and bot.py
 LOCATION, PRICE, CUISINE, OTHER_INPUT, SURPRISE_LOCATION = range(5)
-
-# HK area definitions (keyed by short label, value = (lat, lng))
-HK_AREAS = {
-    "Central":      (22.2783, 114.1540),
-    "Wan Chai":     (22.2790, 114.1750),
-    "Causeway Bay": (22.2800, 114.1850),
-    "TST":          (22.2970, 114.1700),
-    "Mong Kok":     (22.3190, 114.1690),
-    "Sai Ying Pun": (22.2860, 114.1420),
-    "Sheung Wan":   (22.2860, 114.1500),
-    "Admiralty":    (22.2780, 114.1650),
-    "Tin Hau":      (22.2840, 114.1920),
-    "Kennedy Town": (22.2810, 114.1300),
-}
 
 
 def build_area_keyboard() -> InlineKeyboardMarkup:
@@ -56,37 +44,6 @@ def build_price_keyboard() -> InlineKeyboardMarkup:
     ]
     rows = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
     return InlineKeyboardMarkup(rows)
-
-
-def _parse_price_tier(price_range: str) -> int:
-    """Map OpenRice numeric price range to tier 0-$4."""
-    if not price_range:
-        return 0
-    pr = price_range.strip()
-    # Match numeric patterns like $50以下, $51-100, $101-200, $201-400, $401-800, $801以上
-    if pr.startswith("$50") or "50以下" in pr:
-        return 1
-    if "51-100" in pr or "101-200" in pr:
-        return 1
-    if "201-400" in pr:
-        return 2
-    if "401-800" in pr:
-        return 3
-    if "801" in pr:
-        return 4
-    # Fallback to dollar-sign count
-    return pr.count("$")
-
-
-def price_matches(price_range: str, selected: str) -> bool:
-    """Check if a place's price_range matches the selected budget filter."""
-    if selected == "any" or not price_range:
-        return True
-    selected_tier = _parse_price_tier(selected)
-    range_tier = _parse_price_tier(price_range)
-    if range_tier == 0:
-        return True  # Unknown price — include it
-    return range_tier == selected_tier
 
 
 def build_cuisine_keyboard(cuisines: list[str]) -> InlineKeyboardMarkup:

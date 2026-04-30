@@ -116,6 +116,87 @@ def _load_google_cache(data_dir: str | Path) -> dict:
     return get_cache()
 
 
+def _enrich_from_google_cache(
+    name: str, address: str, google_rating: float, review_count: int, google_cache: dict
+) -> tuple[float, int]:
+    """Try exact or name-only cache match and return updated (rating, review_count)."""
+    cache_key = f"{name}|{address}"
+    cached = google_cache.get(cache_key)
+    if not cached:
+        name_lower = name.lower()
+        for ck, cv in google_cache.items():
+            if ck.split("|")[0].strip().lower() == name_lower:
+                cached = cv
+                break
+    if cached and cached.get("google_rating") and not google_rating:
+        google_rating = max(0.0, min(5.0, float(cached["google_rating"])))
+        review_count = max(review_count, int(cached.get("google_reviews", 0)))
+    return google_rating, review_count
+
+
+def _parse_row(row: dict, google_cache: dict) -> Place | None:
+    """Parse a single CSV row into a Place, enriched with cached Google ratings."""
+    name = (row.get("name") or "").strip()
+    if not name:
+        return None
+
+    raw_type = (row.get("type") or "restaurant").strip().lower()
+    if raw_type not in ("restaurant", "bar"):
+        raw_type = "restaurant"
+
+    lat = _safe_float(row.get("lat"))
+    lng = _safe_float(row.get("lng"))
+    if not (-90.0 <= lat <= 90.0):
+        lat = 0.0
+    if not (-180.0 <= lng <= 180.0):
+        lng = 0.0
+
+    google_rating = max(0.0, min(5.0, _safe_float(row.get("google_rating"))))
+    or_rating = max(0.0, min(5.0, _safe_float(row.get("or_rating"))))
+    review_count = max(0, _safe_int(row.get("review_count")))
+
+    address = (row.get("address") or "").strip()
+    google_rating, review_count = _enrich_from_google_cache(name, address, google_rating, review_count, google_cache)
+
+    raw_dishes = row.get("popular_dishes") or "[]"
+    try:
+        dishes = json.loads(raw_dishes)
+        if not isinstance(dishes, list):
+            dishes = []
+    except (json.JSONDecodeError, TypeError):
+        dishes = []
+
+    return Place(
+        name=name,
+        type=raw_type,
+        cuisine_tags=_parse_tags(row.get("cuisine_tags") or ""),
+        style_tags=_parse_tags(row.get("style_tags") or ""),
+        address=address,
+        address_en=(row.get("address_en") or "").strip(),
+        lat=lat,
+        lng=lng,
+        district=(row.get("district") or "").strip(),
+        google_rating=google_rating,
+        or_rating=or_rating,
+        or_score=max(0.0, min(1.0, _safe_float(row.get("or_score")))),
+        review_count=review_count,
+        bookmark_count=max(0, _safe_int(row.get("bookmark_count"))),
+        price_range=(row.get("price_range") or "").strip(),
+        google_place_id=(row.get("google_place_id") or "").strip(),
+        booking_url=(row.get("booking_url") or "").strip(),
+        booking_platform=(row.get("booking_platform") or "").strip(),
+        opening_hours=(row.get("opening_hours") or "").strip(),
+        is_open_now=(row.get("is_open_now") or "").lower() == "true",
+        popular_dishes=dishes,
+        award_status=_safe_int(row.get("award_status")),
+        source_url=(row.get("source_url") or "").strip(),
+        is_secret_gem=(row.get("is_secret_gem") or "false").lower() in ("1", "true"),
+        is_closed=_parse_closed_status(row.get("status") or "", row.get("opening_hours") or "", row.get("source_url") or ""),
+        last_updated=(row.get("last_updated") or "").strip(),
+        source=(row.get("source") or "").strip(),
+    )
+
+
 def load_places(csv_path: str | Path) -> list[Place]:
     """Load places from CSV file, enriched with cached Google ratings."""
     path = Path(csv_path)
@@ -129,82 +210,9 @@ def load_places(csv_path: str | Path) -> list[Place]:
         reader = csv.DictReader(f)
         for row in reader:
             try:
-                name = (row.get("name") or "").strip()
-                if not name:
-                    continue  # Skip rows with no name
-
-                raw_type = (row.get("type") or "restaurant").strip().lower()
-                if raw_type not in ("restaurant", "bar"):
-                    raw_type = "restaurant"
-
-                lat = _safe_float(row.get("lat"))
-                lng = _safe_float(row.get("lng"))
-
-                # Validate coordinate ranges
-                if not (-90.0 <= lat <= 90.0):
-                    lat = 0.0
-                if not (-180.0 <= lng <= 180.0):
-                    lng = 0.0
-
-                # Clamp rating to valid range
-                google_rating = max(0.0, min(5.0, _safe_float(row.get("google_rating"))))
-                or_rating = max(0.0, min(5.0, _safe_float(row.get("or_rating"))))
-
-                review_count = max(0, _safe_int(row.get("review_count")))
-
-                # Enrich with Google ratings from cache
-                address = (row.get("address") or "").strip()
-                cache_key = f"{name}|{address}"
-                cached = google_cache.get(cache_key)
-                if not cached:
-                    # Fallback: name-only match
-                    name_lower = name.lower()
-                    for ck, cv in google_cache.items():
-                        if ck.split("|")[0].strip().lower() == name_lower:
-                            cached = cv
-                            break
-                if cached and cached.get("google_rating") and not google_rating:
-                    google_rating = max(0.0, min(5.0, float(cached["google_rating"])))
-                    review_count = max(review_count, int(cached.get("google_reviews", 0)))
-
-                # Parse popular_dishes
-                raw_dishes = row.get("popular_dishes") or "[]"
-                try:
-                    dishes = json.loads(raw_dishes)
-                    if not isinstance(dishes, list):
-                        dishes = []
-                except (json.JSONDecodeError, TypeError):
-                    dishes = []
-
-                places.append(Place(
-                    name=name,
-                    type=raw_type,
-                    cuisine_tags=_parse_tags(row.get("cuisine_tags") or ""),
-                    style_tags=_parse_tags(row.get("style_tags") or ""),
-                    address=address,
-                    address_en=(row.get("address_en") or "").strip(),
-                    lat=lat,
-                    lng=lng,
-                    district=(row.get("district") or "").strip(),
-                    google_rating=google_rating,
-                    or_rating=or_rating,
-                    or_score=max(0.0, min(1.0, _safe_float(row.get("or_score")))),
-                    review_count=review_count,
-                    bookmark_count=max(0, _safe_int(row.get("bookmark_count"))),
-                    price_range=(row.get("price_range") or "").strip(),
-                    google_place_id=(row.get("google_place_id") or "").strip(),
-                    booking_url=(row.get("booking_url") or "").strip(),
-                    booking_platform=(row.get("booking_platform") or "").strip(),
-                    opening_hours=(row.get("opening_hours") or "").strip(),
-                    is_open_now=(row.get("is_open_now") or "").lower() == "true",
-                    popular_dishes=dishes,
-                    award_status=_safe_int(row.get("award_status")),
-                    source_url=(row.get("source_url") or "").strip(),
-                    is_secret_gem=(row.get("is_secret_gem") or "false").lower() in ("1", "true"),
-                    is_closed=_parse_closed_status(row.get("status") or "", row.get("opening_hours") or "", row.get("source_url") or ""),
-                    last_updated=(row.get("last_updated") or "").strip(),
-                    source=(row.get("source") or "").strip(),
-                ))
+                place = _parse_row(row, google_cache)
+                if place:
+                    places.append(place)
             except Exception as e:
                 logger.warning(f"Error parsing row '{row.get('name', '?')}': {e}")
                 continue

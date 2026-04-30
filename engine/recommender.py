@@ -17,7 +17,8 @@ from engine.taste import score_and_rank_places, ScoredPlace, get_top_cuisines
 from engine.crossover import get_crossover_cuisine, get_serendipitous_cuisine, get_similar_cuisines
 from engine.time_aware import filter_open_places, get_open_status_label
 from engine.lazy_resolve import lazy_resolve_places
-from handlers.common import HK_AREAS
+from engine.price import price_matches
+from utils.constants import HK_AREAS
 from utils.name_norm import normalize_name
 
 logger = logging.getLogger(__name__)
@@ -162,6 +163,168 @@ def get_area_coordinates(area_name: str, areas: dict) -> tuple[float, float]:
     return areas.get(area_name, (22.2783, 114.1747))
 
 
+def _load_exclusion_sets() -> tuple[set[str], set[str]]:
+    """Load closed and personal exclusion lists (cached, thread-safe)."""
+    global _loaded_closed, _loaded_personal
+    data_dir = Path(__file__).parent.parent / "data"
+    with _EXCLUSION_LOCK:
+        if _loaded_closed is None:
+            _loaded_closed = load_closed_places(data_dir)
+        if _loaded_personal is None:
+            _loaded_personal = load_personal_exclusions(data_dir)
+    return _loaded_closed, _loaded_personal
+
+
+def _apply_exclusions(
+    places: list[Place],
+    exclude_place_names: set[str] | None,
+    closed_set: set[str],
+    personal_set: set[str],
+    skip_personal: bool,
+) -> list[Place]:
+    """Apply name, closed, and personal exclusions."""
+    filtered = places
+    if exclude_place_names:
+        excluded = {n.lower() for n in exclude_place_names}
+        before = len(filtered)
+        filtered = [p for p in filtered if p.name.lower() not in excluded]
+        logger.info(f"Step 1b - Excluded personal list: {before - len(filtered)} places")
+
+    filtered = [p for p in filtered if not getattr(p, "is_closed", False)]
+    if closed_set:
+        before = len(filtered)
+        filtered = [p for p in filtered if p.name.lower() not in closed_set]
+        logger.info(f"Step 1c - Closed filter: {before - len(filtered)} places removed")
+
+    if personal_set and not skip_personal:
+        before = len(filtered)
+        filtered = [p for p in filtered if p.name.lower() not in personal_set]
+        logger.info(f"Step 1d - Personal exclusion: {before - len(filtered)} places removed")
+
+    return filtered
+
+
+def _filter_by_cuisine_pipeline(
+    nearby: list[Place],
+    cuisine: str,
+    place_type: str,
+    num_results: int,
+    allow_expansion: bool,
+) -> tuple[list[Place], str, bool]:
+    """Apply cuisine filter with similar/crossover fallback and optional expansion."""
+    crossover = ""
+    expanded = False
+    matched: list[Place] = []
+
+    if place_type == "bar":
+        matched = filter_by_any_tag(nearby, [cuisine])
+    else:
+        matched = filter_by_cuisine(nearby, [cuisine])
+    logger.info(f"Step 6 - Cuisine filter ({cuisine}): {len(matched)} places")
+
+    if not matched:
+        similar = get_similar_cuisines(cuisine, top_n=3)
+        for sim_cuisine, _ in similar:
+            sim_matched = filter_by_any_tag(nearby, [sim_cuisine]) if place_type == "bar" else filter_by_cuisine(nearby, [sim_cuisine])
+            if sim_matched:
+                matched = sim_matched
+                crossover = sim_cuisine
+                logger.info(f"  Similar fallback ({sim_cuisine}): {len(matched)} places")
+                break
+
+    if not matched:
+        all_cuisines = list({tag for p in nearby for tag in p.cuisine_tags})
+        cross = get_crossover_cuisine([cuisine], set(all_cuisines))
+        if cross:
+            matched = filter_by_any_tag(nearby, [cross]) if place_type == "bar" else filter_by_cuisine(nearby, [cross])
+            crossover = cross
+            logger.info(f"  Crossover fallback ({cross}): {len(matched)} places")
+
+    if not matched:
+        expanded = True
+        matched = []
+
+    if allow_expansion and len(matched) < num_results and matched:
+        matched_names = {p.name for p in matched}
+        similar = get_similar_cuisines(cuisine, top_n=5)
+        for sim_cuisine, _ in similar:
+            if len(matched) >= num_results:
+                break
+            sim_matches = [p for p in (filter_by_any_tag(nearby, [sim_cuisine]) if place_type == "bar" else filter_by_cuisine(nearby, [sim_cuisine])) if p.name not in matched_names]
+            if sim_matches:
+                matched.extend(sim_matches[:num_results - len(matched)])
+                matched_names.update(p.name for p in sim_matches)
+                if not crossover:
+                    crossover = sim_cuisine
+                expanded = True
+                logger.info(f"  Expansion ({sim_cuisine}): +{len(sim_matches)} places")
+
+    return matched, crossover, expanded
+
+
+def _surprise_mode(nearby: list[Place], num_results: int) -> tuple[list[Place], str]:
+    """Pick a serendipitous cuisine and return candidates + suggestion."""
+    preferred = [c[0] for c in get_top_cuisines(10)]
+    all_cuisines = list({tag for p in nearby for tag in p.cuisine_tags})
+    surprise_blacklist = {"bakery", "dessert", "cafe", "brunch"}
+    filtered_cuisines = [c for c in all_cuisines if c not in surprise_blacklist]
+    surprise_cuisine = get_serendipitous_cuisine(preferred, filtered_cuisines)
+
+    if surprise_cuisine:
+        candidates = filter_by_cuisine(nearby, [surprise_cuisine])
+        logger.info(f"Step 6 - Surprise ({surprise_cuisine}): {len(candidates)} places")
+        if len(candidates) < num_results:
+            candidates_names = {p.name for p in candidates}
+            diverse_pool = [p for p in nearby if p.name not in candidates_names and not any(t in surprise_blacklist for t in p.cuisine_tags)]
+            random.shuffle(diverse_pool)
+            candidates.extend(diverse_pool[:num_results - len(candidates)])
+        return candidates, surprise_cuisine
+
+    diverse_pool = [p for p in nearby if not any(t in surprise_blacklist for t in p.cuisine_tags)]
+    if diverse_pool:
+        return diverse_pool, ""
+    return nearby, ""
+
+
+def _deduplicate_franchises(candidates: list[Place], area_lat: float, area_lng: float) -> list[Place]:
+    """Deduplicate by normalized name, keeping closest to origin."""
+    from utils.haversine import haversine_distance, compute_walk_distance
+    seen: dict[str, Place] = {}
+    for p in candidates:
+        if getattr(p, "distance_walk_m", 0) == 0 and (area_lat != 0 or area_lng != 0) and (p.lat != 0 or p.lng != 0):
+            d = haversine_distance(area_lat, area_lng, p.lat, p.lng)
+            p.distance_walk_m = compute_walk_distance(d)
+        key = normalize_name(p.name)
+        if key not in seen:
+            seen[key] = p
+        else:
+            existing = seen[key]
+            if (p.distance_walk_m or 99999) < (existing.distance_walk_m or 99999):
+                seen[key] = p
+    return list(seen.values())
+
+
+def _apply_semantic_boost(candidates: list[Place], semantic_query: str) -> list[Place]:
+    """Re-rank candidates by semantic similarity to query."""
+    try:
+        from engine.semantic_filter import SemanticFilter
+        from pathlib import Path
+        sem_cfg = config.get("embedding", {})
+        sem = SemanticFilter(
+            data_dir=Path(__file__).parent.parent / "data",
+            ollama_url=sem_cfg.get("ollama_url", "http://localhost:11434"),
+            model=sem_cfg.get("model", "qwen3-embedding:0.6b"),
+            dim=sem_cfg.get("dim", 1024),
+        )
+        candidates = sem.boost_candidates(candidates, semantic_query, boost_weight=0.25)
+        logger.info(f"Step 9 - Semantic boost applied: {len(candidates)} re-ranked")
+    except FileNotFoundError:
+        logger.debug("Embeddings not yet built, skipping semantic boost")
+    except Exception:
+        logger.warning("Semantic boost failed, continuing without", exc_info=True)
+    return candidates
+
+
 def recommend(
     all_places: list[Place],
     place_type: str,
@@ -185,41 +348,16 @@ def recommend(
     result = RecommendationResult()
     num_results = max(1, min(num_results, 50))
 
-    # Load exclusion lists (cached — thread-safe initialization)
-    global _loaded_closed, _loaded_personal
-    data_dir = Path(__file__).parent.parent / "data"
-    with _EXCLUSION_LOCK:
-        if _loaded_closed is None:
-            _loaded_closed = load_closed_places(data_dir)
-        if _loaded_personal is None:
-            _loaded_personal = load_personal_exclusions(data_dir)
+    _loaded_closed, _loaded_personal = _load_exclusion_sets()
 
     # Step 1: Filter by type
     filtered = filter_by_type(all_places, place_type)
     logger.info(f"Step 1 - Type filter ({place_type}): {len(filtered)} places")
 
-    if exclude_place_names:
-        excluded = {n.lower() for n in exclude_place_names}
-        before = len(filtered)
-        filtered = [p for p in filtered if p.name.lower() not in excluded]
-        logger.info(f"Step 1b - Excluded personal list: {before - len(filtered)} places")
-
-    # Exclude closed places (from is_closed field + closed_places.txt)
-    filtered = [p for p in filtered if not getattr(p, "is_closed", False)]
-    if _loaded_closed:
-        before = len(filtered)
-        filtered = [p for p in filtered if p.name.lower() not in _loaded_closed]
-        logger.info(f"Step 1c - Closed filter: {before - len(filtered)} places removed")
-
-    # Exclude personal "minion abc" list
-    if _loaded_personal and not skip_personal_exclusions:
-        before = len(filtered)
-        filtered = [p for p in filtered if p.name.lower() not in _loaded_personal]
-        logger.info(f"Step 1d - Personal exclusion: {before - len(filtered)} places removed")
+    filtered = _apply_exclusions(filtered, exclude_place_names, _loaded_closed, _loaded_personal, skip_personal_exclusions)
 
     # Step 2/3: Filter by proximity
     scope_radius = 1500 if area_name and area_name in AREA_SCOPE_NEIGHBORS else max_distance_m
-    # For bars/drink, expand scope since cocktail bars etc. are sparse
     if place_type == "bar" and scope_radius < 5000:
         scope_radius = 5000
     nearby = _filter_nearby_places(filtered, area_name, area_lat, area_lng, scope_radius)
@@ -230,7 +368,6 @@ def recommend(
 
     # Step 3b: Price range filtering
     if price_filter and price_filter != "any" and nearby:
-        from handlers.common import price_matches
         before = len(nearby)
         nearby = [p for p in nearby if price_matches(p.price_range, price_filter)]
         logger.info(f"Step 3b - Price filter ({price_filter}): {before - len(nearby)} removed")
@@ -242,104 +379,19 @@ def recommend(
         if len(open_now) >= num_results:
             nearby = open_now
 
-    # Step 5: Secret gem flags + cuisine filtering
+    # Step 5/6: Cuisine filtering or surprise mode
     if cuisine and cuisine != "surprise":
-        if place_type == "bar":
-            matched = filter_by_any_tag(nearby, [cuisine])
-        else:
-            matched = filter_by_cuisine(nearby, [cuisine])
-        logger.info(f"Step 6 - Cuisine filter ({cuisine}): {len(matched)} places")
-
-        if not matched:
-            # Smart fallback: try SIMILAR cuisines first (same family)
-            similar = get_similar_cuisines(cuisine, top_n=3)
-            for sim_cuisine, _ in similar:
-                sim_matched = filter_by_any_tag(nearby, [sim_cuisine]) if place_type == "bar" else filter_by_cuisine(nearby, [sim_cuisine])
-                if sim_matched:
-                    matched = sim_matched
-                    result.crossover_suggestion = sim_cuisine
-                    logger.info(f"  Similar fallback ({sim_cuisine}): {len(matched)} places")
-                    break
-
-        if not matched:
-            # Second fallback: crossover suggestion
-            all_cuisines = list({tag for p in nearby for tag in p.cuisine_tags})
-            crossover = get_crossover_cuisine([cuisine], set(all_cuisines))
-            if crossover:
-                matched = filter_by_any_tag(nearby, [crossover]) if place_type == "bar" else filter_by_cuisine(nearby, [crossover])
-                result.crossover_suggestion = crossover
-                logger.info(f"  Crossover fallback ({crossover}): {len(matched)} places")
-
-        if not matched:
-            # Last resort: show empty, don't pollute with unrelated results
-            result.expanded_search = True
-            matched = []
-
-        if allow_expansion and len(matched) < num_results and matched:
-            # Expansion: add similar cuisines to fill the list
-            matched_names = {p.name for p in matched}
-            similar = get_similar_cuisines(cuisine, top_n=5)
-            for sim_cuisine, _ in similar:
-                if len(matched) >= num_results:
-                    break
-                sim_matches = [p for p in (filter_by_any_tag(nearby, [sim_cuisine]) if place_type == "bar" else filter_by_cuisine(nearby, [sim_cuisine])) if p.name not in matched_names]
-                if sim_matches:
-                    matched.extend(sim_matches[:num_results - len(matched)])
-                    matched_names.update(p.name for p in sim_matches)
-                    if not result.crossover_suggestion:
-                        result.crossover_suggestion = sim_cuisine
-                    result.expanded_search = True
-                    logger.info(f"  Expansion ({sim_cuisine}): +{len(sim_matches)} places")
-
-        candidates = matched
+        candidates, result.crossover_suggestion, result.expanded_search = _filter_by_cuisine_pipeline(
+            nearby, cuisine, place_type, num_results, allow_expansion
+        )
     elif cuisine == "surprise":
-        # Serendipitous mode — pick a random cuisine, avoid bakery/dessert bias
-        preferred = [c[0] for c in get_top_cuisines(10)]
-        all_cuisines = list({tag for p in nearby for tag in p.cuisine_tags})
-
-        # Exclude low-value surprise picks
-        surprise_blacklist = {"bakery", "dessert", "cafe", "brunch"}
-        filtered_cuisines = [c for c in all_cuisines if c not in surprise_blacklist]
-
-        surprise_cuisine = get_serendipitous_cuisine(preferred, filtered_cuisines)
-
-        if surprise_cuisine:
-            candidates = filter_by_cuisine(nearby, [surprise_cuisine])
-            result.crossover_suggestion = surprise_cuisine
-            logger.info(f"Step 6 - Surprise ({surprise_cuisine}): {len(candidates)} places")
-            if len(candidates) < num_results:
-                # Fill with diverse cuisines, not just all nearby
-                candidates_names = {p.name for p in candidates}
-                diverse_pool = [p for p in nearby if p.name not in candidates_names and not any(t in surprise_blacklist for t in p.cuisine_tags)]
-                random.shuffle(diverse_pool)
-                candidates.extend(diverse_pool[:num_results - len(candidates)])
-        else:
-            # Random pick from diverse pool
-            diverse_pool = [p for p in nearby if not any(t in surprise_blacklist for t in p.cuisine_tags)]
-            if diverse_pool:
-                candidates = diverse_pool
-            else:
-                candidates = nearby
+        candidates, result.crossover_suggestion = _surprise_mode(nearby, num_results)
     else:
         candidates = nearby
 
-    # Step 7: Deduplicate franchises (same name) — keep closest to user
+    # Step 7: Deduplicate franchises
     if candidates:
-        from utils.haversine import haversine_distance, compute_walk_distance
-        seen: dict[str, Place] = {}
-        for p in candidates:
-            # Ensure distance is computed for dedup comparison
-            if getattr(p, "distance_walk_m", 0) == 0 and (area_lat != 0 or area_lng != 0) and (p.lat != 0 or p.lng != 0):
-                d = haversine_distance(area_lat, area_lng, p.lat, p.lng)
-                p.distance_walk_m = compute_walk_distance(d)
-            key = normalize_name(p.name)
-            if key not in seen:
-                seen[key] = p
-            else:
-                existing = seen[key]
-                if (p.distance_walk_m or 99999) < (existing.distance_walk_m or 99999):
-                    seen[key] = p
-        candidates = list(seen.values())
+        candidates = _deduplicate_franchises(candidates, area_lat, area_lng)
         logger.info(f"Step 7 - Franchise dedup: {len(candidates)} unique names")
 
     # Step 8: Filter bottom 20% by rating
@@ -350,23 +402,7 @@ def recommend(
 
     # Step 9: Semantic boost (if enabled)
     if use_semantic_boost and semantic_query and candidates:
-        try:
-            from engine.semantic_filter import SemanticFilter
-
-            # Load embedding config from bot config (fallback to defaults)
-            sem_cfg = config.get("embedding", {})
-            sem = SemanticFilter(
-                data_dir=Path(__file__).parent.parent / "data",
-                ollama_url=sem_cfg.get("ollama_url", "http://localhost:11434"),
-                model=sem_cfg.get("model", "qwen3-embedding:0.6b"),
-                dim=sem_cfg.get("dim", 1024),
-            )
-            candidates = sem.boost_candidates(candidates, semantic_query, boost_weight=0.25)
-            logger.info(f"Step 9 - Semantic boost applied: {len(candidates)} re-ranked")
-        except FileNotFoundError:
-            logger.debug("Embeddings not yet built, skipping semantic boost")
-        except Exception:
-            logger.warning("Semantic boost failed, continuing without", exc_info=True)
+        candidates = _apply_semantic_boost(candidates, semantic_query)
 
     # Step 10: Score and rank
     if not candidates:
@@ -375,19 +411,14 @@ def recommend(
 
     if use_taste_scoring:
         scored = score_and_rank_places(candidates)
-        # Take top candidates, with some randomization among similarly-scored
         top_scored = scored[:num_results * 3]
         result.places = [s.place for s in top_scored[:num_results]]
     else:
-        # Random selection
         result.places = random.sample(candidates, min(num_results, len(candidates)))
 
-    # Keep taste-driven ordering from score_and_rank_places; do not re-sort by raw rating
-    # (Only sort by rating when taste scoring is off for deterministic display)
     if not use_taste_scoring:
         result.places.sort(key=lambda p: p.google_rating, reverse=True)
 
-    # Step 9: Lazy-resolve Google ratings for surfaced venues (background)
     try:
         lazy_resolve_places(result.places)
     except Exception as e:

@@ -1,0 +1,79 @@
+[constraints]
+max_cycles = 0
+max_coupling = "B"
+max_cc = 30
+no_god_files = true
+
+# Lower order = higher-level / closer to entry point (can depend on lower layers)
+# Higher order = foundational / stable (can be depended on by many)
+
+[[layers]]
+name = "app"
+paths = ["bot.py"]
+order = 0
+
+[[layers]]
+name = "tests"
+paths = ["tests/*"]
+order = 0
+
+[[layers]]
+name = "handlers"
+paths = ["handlers/*"]
+order = 10
+
+[[layers]]
+name = "engine"
+paths = ["engine/*"]
+order = 20
+
+[[layers]]
+name = "scripts"
+paths = ["scripts/*"]
+order = 30
+
+[[layers]]
+name = "scrapers"
+paths = ["scrapers/*"]
+order = 40
+
+[[layers]]
+name = "data"
+paths = ["data/*"]
+order = 50
+
+[[layers]]
+name = "utils"
+paths = ["utils/*"]
+order = 60
+
+# Explicit boundaries to enforce clean architecture
+[[boundaries]]
+from = "utils/*"
+to = "engine/*"
+reason = "Utils must not depend on higher-level engine modules"
+
+[[boundaries]]
+from = "utils/*"
+to = "handlers/*"
+reason = "Utils must not depend on higher-level handler modules"
+
+[[boundaries]]
+from = "data/*"
+to = "handlers/*"
+reason = "Data layer should not depend on handlers"
+
+[[boundaries]]
+from = "data/*"
+to = "engine/*"
+reason = "Data layer should not depend on engine logic"
+
+[[boundaries]]
+from = "scrapers/*"
+to = "handlers/*"
+reason = "Scrapers should not depend on handlers"
+
+[[boundaries]]
+from = "scrapers/*"
+to = "engine/*"
+reason = "Scrapers should not depend on engine logic"
